@@ -1,6 +1,13 @@
-#include <stdio.h>
+#include "gb.h"
 
 int main() {
-    printf("Hello, world!\n");
-    return 0;
+     struct gb gb;
+
+     gb_cpu_reset(&gb);
+
+     while (1) {
+          gb_cpu_run_instruction(&gb);
+     }
+
+     return 0;
 }
