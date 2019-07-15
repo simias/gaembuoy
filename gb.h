@@ -8,9 +8,11 @@ struct gb;
 
 #include "cpu.h"
 #include "memory.h"
+#include "cart.h"
 
 struct gb {
      struct gb_cpu cpu;
+     struct gb_cart cart;
 };
 
 static inline void die(void) {
