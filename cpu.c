@@ -22,9 +22,13 @@ static void gb_i_unimplemented(struct gb* gb) {
      die();
 }
 
+static void gb_i_nop(struct gb *gb) {
+     // NOP
+}
+
 static gb_instruction_f gb_instructions[0x100] = {
      // 0x00
-     gb_i_unimplemented,
+     gb_i_nop,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
