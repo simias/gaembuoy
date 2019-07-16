@@ -9,7 +9,28 @@ void gb_cpu_reset(struct gb *gb) {
      cpu->pc = 0x100;
 }
 
+static void gb_cpu_load_pc(struct gb *gb, uint16_t new_pc) {
+     gb->cpu.pc = new_pc;
+}
+
 typedef void (*gb_instruction_f)(struct gb *);
+
+static uint8_t gb_cpu_next_i8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     uint8_t i8 = gb_memory_readb(gb, cpu->pc);
+
+     cpu->pc = (cpu->pc + 1) & 0xffff;
+
+     return i8;
+}
+
+static uint16_t gb_cpu_next_i16(struct gb *gb) {
+     uint16_t b0 = gb_cpu_next_i8(gb);
+     uint16_t b1 = gb_cpu_next_i8(gb);
+
+     return b0 | (b1 << 8);
+}
 
 static void gb_i_unimplemented(struct gb* gb) {
      struct gb_cpu *cpu = &gb->cpu;
@@ -24,6 +45,12 @@ static void gb_i_unimplemented(struct gb* gb) {
 
 static void gb_i_nop(struct gb *gb) {
      // NOP
+}
+
+static void gb_i_jp_i16(struct gb *gb) {
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     gb_cpu_load_pc(gb, i16);
 }
 
 static gb_instruction_f gb_instructions[0x100] = {
@@ -235,7 +262,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_jp_i16,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -302,11 +329,7 @@ static gb_instruction_f gb_instructions[0x100] = {
 };
 
 void gb_cpu_run_instruction(struct gb *gb) {
-     struct gb_cpu *cpu = &gb->cpu;
-
-     uint8_t instruction = gb_memory_readb(gb, cpu->pc);
-
-     cpu->pc = (cpu->pc + 1) & 0xffff;
+     uint8_t instruction = gb_cpu_next_i8(gb);
 
      gb_instructions[instruction](gb);
 }
