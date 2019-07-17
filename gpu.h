@@ -14,8 +14,11 @@ struct gb_gpu {
      bool iten_mode1;
      /* Mode 2 interrupt enable */
      bool iten_mode2;
+     /* LCD Control register */
+     uint8_t lcdc;
 };
 
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat);
+void gb_gpu_set_lcdc(struct gb *gb, uint8_t stat);
 
 #endif /* _GB_GPU_H_ */
