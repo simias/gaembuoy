@@ -134,6 +134,24 @@ static void gb_i_sub_a_a(struct gb *gb) {
      cpu->f_c = false;
 }
 
+static void gb_i_add_sp_si8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     /* Offset is signed */
+     int8_t i8 = gb_cpu_next_i8(gb);
+
+     /* Use 32bit arithmetic to avoid signed integer overflow UB */
+     int32_t r = cpu->sp;
+     r += i8;
+
+     cpu->f_z = false;
+     cpu->f_n = false;
+     /* Carry and Half-carry are for the low byte */
+     cpu->f_h = (cpu->sp ^ i8 ^ r) & 0x10;
+     cpu->f_c = (cpu->sp ^ i8 ^ r) & 0x100;
+
+     cpu->sp = r;
+}
+
 /*********
  * Loads *
  *********/
@@ -435,7 +453,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_add_sp_si8,
      gb_i_unimplemented,
      gb_i_ld_mi16_a,
      gb_i_unimplemented,
