@@ -46,8 +46,6 @@ static void gb_cpu_pushw(struct gb *gb, uint16_t w) {
      gb_cpu_pushb(gb, w & 0xff);
 }
 
-typedef void (*gb_instruction_f)(struct gb *);
-
 static uint8_t gb_cpu_next_i8(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
@@ -65,6 +63,12 @@ static uint16_t gb_cpu_next_i16(struct gb *gb) {
      return b0 | (b1 << 8);
 }
 
+/****************
+ * Instructions *
+ ****************/
+
+typedef void (*gb_instruction_f)(struct gb *);
+
 static void gb_i_unimplemented(struct gb* gb) {
      struct gb_cpu *cpu = &gb->cpu;
      uint16_t instruction_pc = (cpu->pc - 1) & 0xffff;
@@ -76,9 +80,21 @@ static void gb_i_unimplemented(struct gb* gb) {
      die();
 }
 
+/*****************
+ * Miscellaneous *
+ *****************/
+
 static void gb_i_nop(struct gb *gb) {
      // NOP
 }
+
+static void gb_i_di(struct gb *gb) {
+     // XXX TODO: disable interrupts
+}
+
+/*********
+ * Loads *
+ *********/
 
 static void gb_i_ld_a_i8(struct gb *gb) {
      uint8_t i8 = gb_cpu_next_i8(gb);
@@ -105,6 +121,10 @@ static void gb_i_ld_sp_i16(struct gb *gb) {
      gb->cpu.sp = i16;
 }
 
+/***************
+ * Jumps/Calls *
+ ***************/
+
 static void gb_i_jp_i16(struct gb *gb) {
      uint16_t i16 = gb_cpu_next_i16(gb);
 
@@ -117,10 +137,6 @@ static void gb_i_call_i16(struct gb *gb) {
      gb_cpu_pushw(gb, gb->cpu.pc);
 
      gb_cpu_load_pc(gb, i16);
-}
-
-static void gb_i_di(struct gb *gb) {
-     // XXX TODO: disable interrupts
 }
 
 static gb_instruction_f gb_instructions[0x100] = {
