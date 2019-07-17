@@ -7,6 +7,8 @@
 /* Zero page RAM */
 #define ZRAM_BASE       0xff80U
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
+/* Interrupt Enable register */
+#define REG_IE          0xffffU
 
 /* Read one byte from memory at `addr` */
 uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
@@ -28,6 +30,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= ZRAM_BASE && addr < ZRAM_END) {
           gb->zram[addr - ZRAM_BASE] = val;
+          return;
+     }
+
+     if (addr == REG_IE) {
+          printf("Store IE=0x%02x\n", val);
           return;
      }
 
