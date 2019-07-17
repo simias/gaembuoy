@@ -16,3 +16,8 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      return 0xff;
 }
+
+void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
+     printf("Unsupported write at address 0x%04x [val=0x%02x]\n", addr, val);
+     die();
+}
