@@ -8,6 +8,15 @@ struct gb_cpu {
      uint16_t sp;
      /* A register */
      uint8_t a;
+
+     /* Zero flag */
+     bool f_z;
+     /* Substract flag */
+     bool f_n;
+     /* Half-Carry flag */
+     bool f_h;
+     /* Carry flag */
+     bool f_c;
 };
 
 void gb_cpu_reset(struct gb *gb);
