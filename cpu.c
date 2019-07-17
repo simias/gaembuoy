@@ -7,6 +7,11 @@ void gb_cpu_reset(struct gb *gb) {
      cpu->sp = 0;
      cpu->a  = 0;
 
+     cpu->f_z = false;
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = false;
+
      /* XXX For the time being we don't emulate the BOOTROM so we start the
       * execution just past it */
      cpu->pc = 0x100;
@@ -15,6 +20,11 @@ void gb_cpu_reset(struct gb *gb) {
 static void gb_cpu_dump(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
+     fprintf(stderr, "Flags: %c %c %c %c\n",
+             cpu->f_z ? 'Z' : '-',
+             cpu->f_n ? 'N' : '-',
+             cpu->f_h ? 'H' : '-',
+             cpu->f_c ? 'C' : '-');
      fprintf(stderr, "PC: 0x%04x [%02x %02x %02x]\n",
              cpu->pc,
              gb_memory_readb(gb, cpu->pc),
@@ -90,6 +100,21 @@ static void gb_i_nop(struct gb *gb) {
 
 static void gb_i_di(struct gb *gb) {
      // XXX TODO: disable interrupts
+}
+
+/**************
+ * Arithmetic *
+ **************/
+
+static void gb_i_sub_a_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = 0;
+
+     cpu->f_z = true;
+     cpu->f_n = true;
+     cpu->f_h = false;
+     cpu->f_c = false;
 }
 
 /*********
@@ -301,7 +326,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_sub_a_a,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,

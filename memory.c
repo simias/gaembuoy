@@ -10,6 +10,8 @@
 /* Zero page RAM */
 #define ZRAM_BASE       0xff80U
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
+/* LCD Stat register */
+#define REG_LCD_STAT    0xff41U
 /* Interrupt Enable register */
 #define REG_IE          0xffffU
 
@@ -47,6 +49,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_IE) {
           printf("Store IE=0x%02x\n", val);
+          return;
+     }
+
+     if (addr == REG_LCD_STAT) {
+          gb_gpu_set_lcd_stat(gb, val);
           return;
      }
 
