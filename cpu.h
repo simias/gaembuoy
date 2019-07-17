@@ -4,6 +4,8 @@
 struct gb_cpu {
      /* Program Counter */
      uint16_t pc;
+     /* Stack Pointer */
+     uint16_t sp;
 };
 
 void gb_cpu_reset(struct gb *gb);

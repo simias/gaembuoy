@@ -4,6 +4,8 @@
 void gb_cpu_reset(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
+     cpu->sp = 0;
+
      /* XXX For the time being we don't emulate the BOOTROM so we start the
       * execution just past it */
      cpu->pc = 0x100;
@@ -45,6 +47,12 @@ static void gb_i_unimplemented(struct gb* gb) {
 
 static void gb_i_nop(struct gb *gb) {
      // NOP
+}
+
+static void gb_i_ld_sp_i16(struct gb *gb) {
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     gb->cpu.sp = i16;
 }
 
 static void gb_i_jp_i16(struct gb *gb) {
@@ -111,7 +119,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      // 0x30
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_sp_i16,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
