@@ -12,6 +12,10 @@
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
 /* LCD Stat register */
 #define REG_LCD_STAT    0xff41U
+/* Background scroll Y */
+#define REG_SCY         0xff42U
+/* Background scroll X */
+#define REG_SCX         0xff43U
 /* Interrupt Enable register */
 #define REG_IE          0xffffU
 
@@ -27,6 +31,14 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
           return gb->iram[addr - IRAM_BASE];
+     }
+
+     if (addr == REG_SCY) {
+          return gb->gpu.scy;
+     }
+
+     if (addr == REG_SCX) {
+          return gb->gpu.scx;
      }
 
      printf("Unsupported read at address 0x%04x\n", addr);
@@ -54,6 +66,16 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_LCD_STAT) {
           gb_gpu_set_lcd_stat(gb, val);
+          return;
+     }
+
+     if (addr == REG_SCY) {
+          gb->gpu.scy = val;
+          return;
+     }
+
+     if (addr == REG_SCX) {
+          gb->gpu.scx = val;
           return;
      }
 
