@@ -47,9 +47,26 @@ static void gb_cpu_pushb(struct gb *gb, uint8_t b) {
      gb_memory_writeb(gb, cpu->sp, b);
 }
 
+static uint8_t gb_cpu_popb(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     uint8_t b = gb_memory_readb(gb, cpu->sp);
+
+     cpu->sp = (cpu->sp + 1) & 0xffff;
+
+     return b;
+}
+
 static void gb_cpu_pushw(struct gb *gb, uint16_t w) {
      gb_cpu_pushb(gb, w >> 8);
      gb_cpu_pushb(gb, w & 0xff);
+}
+
+static uint16_t gb_cpu_popw(struct gb *gb) {
+     uint16_t b0 = gb_cpu_popb(gb);
+     uint16_t b1 = gb_cpu_popb(gb);
+
+     return b0 | (b1 << 8);
 }
 
 static uint8_t gb_cpu_next_i8(struct gb *gb) {
@@ -158,6 +175,12 @@ static void gb_i_call_i16(struct gb *gb) {
      gb_cpu_pushw(gb, gb->cpu.pc);
 
      gb_cpu_load_pc(gb, i16);
+}
+
+static void gb_i_ret(struct gb *gb) {
+     uint16_t addr = gb_cpu_popw(gb);
+
+     gb_cpu_load_pc(gb, addr);
 }
 
 static gb_instruction_f gb_instructions[0x100] = {
@@ -375,7 +398,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ret,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
