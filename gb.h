@@ -3,16 +3,19 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 struct gb;
 
 #include "cpu.h"
 #include "memory.h"
 #include "cart.h"
+#include "gpu.h"
 
 struct gb {
      struct gb_cpu cpu;
      struct gb_cart cart;
+     struct gb_gpu gpu;
      /* Internal RAM */
      uint8_t iram[0x2000];
      /* Zero-page RAM */
