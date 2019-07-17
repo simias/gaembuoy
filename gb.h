@@ -13,6 +13,8 @@ struct gb;
 struct gb {
      struct gb_cpu cpu;
      struct gb_cart cart;
+     /* Zero-page RAM */
+     uint8_t zram[0x7f];
 };
 
 static inline void die(void) {
