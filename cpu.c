@@ -12,6 +12,23 @@ void gb_cpu_reset(struct gb *gb) {
      cpu->pc = 0x100;
 }
 
+static void gb_cpu_dump(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     fprintf(stderr, "PC: 0x%04x [%02x %02x %02x]\n",
+             cpu->pc,
+             gb_memory_readb(gb, cpu->pc),
+             gb_memory_readb(gb, cpu->pc + 1),
+             gb_memory_readb(gb, cpu->pc + 2));
+     fprintf(stderr, "SP: 0x%04x [%02x %02x %02x]\n",
+             cpu->sp,
+             gb_memory_readb(gb, cpu->sp),
+             gb_memory_readb(gb, cpu->sp + 1),
+             gb_memory_readb(gb, cpu->sp + 2));
+     fprintf(stderr, "A : 0x%02x\n",   cpu->a);
+     fprintf(stderr, "\n");
+}
+
 static void gb_cpu_load_pc(struct gb *gb, uint16_t new_pc) {
      gb->cpu.pc = new_pc;
 }
@@ -369,7 +386,11 @@ static gb_instruction_f gb_instructions[0x100] = {
 };
 
 void gb_cpu_run_instruction(struct gb *gb) {
-     uint8_t instruction = gb_cpu_next_i8(gb);
+     uint8_t instruction;
+
+     gb_cpu_dump(gb);
+
+     instruction = gb_cpu_next_i8(gb);
 
      gb_instructions[instruction](gb);
 }
