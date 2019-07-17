@@ -13,6 +13,8 @@ struct gb;
 struct gb {
      struct gb_cpu cpu;
      struct gb_cart cart;
+     /* Internal RAM */
+     uint8_t iram[0x2000];
      /* Zero-page RAM */
      uint8_t zram[0x7f];
 };
