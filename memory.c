@@ -14,6 +14,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb_cart_rom_readb(gb, addr - ROM_BASE);
      }
 
+     if (addr >= ZRAM_BASE && addr < ZRAM_END) {
+          return gb->zram[addr - ZRAM_BASE];
+     }
+
      printf("Unsupported read at address 0x%04x\n", addr);
      die();
 
