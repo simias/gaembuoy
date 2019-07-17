@@ -53,6 +53,10 @@ static void gb_i_jp_i16(struct gb *gb) {
      gb_cpu_load_pc(gb, i16);
 }
 
+static void gb_i_di(struct gb *gb) {
+     // XXX TODO: disable interrupts
+}
+
 static gb_instruction_f gb_instructions[0x100] = {
      // 0x00
      gb_i_nop,
@@ -313,7 +317,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_di,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
