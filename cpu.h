@@ -6,6 +6,8 @@ struct gb_cpu {
      uint16_t pc;
      /* Stack Pointer */
      uint16_t sp;
+     /* A register */
+     uint8_t a;
 };
 
 void gb_cpu_reset(struct gb *gb);
