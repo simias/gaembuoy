@@ -2,6 +2,10 @@
 #define _GB_GPU_H_
 
 struct gb_gpu {
+     /* Background scroll X */
+     uint8_t scx;
+     /* Background scroll Y */
+     uint8_t scy;
      /* Line counter interrupt enable */
      bool iten_lyc;
      /* Mode 0 interrupt enable */
