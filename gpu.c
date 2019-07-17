@@ -16,3 +16,8 @@ void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat) {
              gpu->iten_mode2,
              gpu->iten_lyc);
 }
+
+void gb_gpu_set_lcdc(struct gb *gb, uint8_t ctrl) {
+     gb->gpu.lcdc = ctrl;
+     fprintf(stderr, "GPU LCDC: 0x%02x\n", ctrl);
+}
