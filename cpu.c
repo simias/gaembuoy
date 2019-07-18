@@ -225,6 +225,12 @@ static void gb_i_ld_hl_i16(struct gb *gb) {
      gb_cpu_set_hl(gb, i16);
 }
 
+static void gb_i_push_hl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     gb_cpu_pushw(gb, hl);
+}
+
 /***************
  * Jumps/Calls *
  ***************/
@@ -494,7 +500,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_push_hl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_add_sp_si8,
