@@ -296,6 +296,48 @@ static void gb_i_ld_a_mhl(struct gb *gb) {
      gb->cpu.a = v;
 }
 
+static void gb_i_ld_b_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     gb->cpu.b = v;
+}
+
+static void gb_i_ld_c_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     gb->cpu.c = v;
+}
+
+static void gb_i_ld_d_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     gb->cpu.d = v;
+}
+
+static void gb_i_ld_e_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     gb->cpu.e = v;
+}
+
+static void gb_i_ld_h_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     gb->cpu.h = v;
+}
+
+static void gb_i_ld_l_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     gb->cpu.l = v;
+}
+
 static void gb_i_push_hl(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
 
@@ -402,6 +444,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
+     gb_i_ld_b_mhl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -409,8 +452,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_c_mhl,
      gb_i_unimplemented,
      // 0x50
      gb_i_unimplemented,
@@ -419,6 +461,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
+     gb_i_ld_d_mhl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -426,8 +469,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_e_mhl,
      gb_i_unimplemented,
      // 0x60
      gb_i_unimplemented,
@@ -436,6 +478,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
+     gb_i_ld_h_mhl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -443,8 +486,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_l_mhl,
      gb_i_unimplemented,
      // 0x70
      gb_i_unimplemented,
