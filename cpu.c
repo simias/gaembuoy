@@ -139,6 +139,24 @@ static void gb_i_di(struct gb *gb) {
  * Arithmetic *
  **************/
 
+/* Add two 16 bit values, update the CPU flags and return the result */
+static uint16_t gb_cpu_addw_set_flags(struct gb *gb, uint16_t a, uint16_t b) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     /* Widen to 32bits to get the carry */
+     uint32_t wa = a;
+     uint32_t wb = b;
+
+     uint32_t r = a + b;
+
+     cpu->f_n = false;
+     cpu->f_c = r & 0x10000;
+     cpu->f_h = (wa ^ wb ^ r) & 0x1000;
+     /* cpu->f_z is not altered */
+
+     return r;
+}
+
 static void gb_i_sub_a_a(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
@@ -166,6 +184,14 @@ static void gb_i_add_sp_si8(struct gb *gb) {
      cpu->f_c = (cpu->sp ^ i8 ^ r) & 0x100;
 
      cpu->sp = r;
+}
+
+static void gb_i_add_hl_sp(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     hl = gb_cpu_addw_set_flags(gb, hl, gb->cpu.sp);
+
+     gb_cpu_set_hl(gb, hl);
 }
 
 /*********
@@ -289,7 +315,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_add_hl_sp,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
