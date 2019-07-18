@@ -6,6 +6,10 @@ void gb_cpu_reset(struct gb *gb) {
 
      cpu->sp = 0;
      cpu->a  = 0;
+     cpu->b  = 0;
+     cpu->c  = 0;
+     cpu->d  = 0;
+     cpu->e  = 0;
      cpu->h  = 0;
      cpu->l  = 0;
 
@@ -17,6 +21,30 @@ void gb_cpu_reset(struct gb *gb) {
      /* XXX For the time being we don't emulate the BOOTROM so we start the
       * execution just past it */
      cpu->pc = 0x100;
+}
+
+static uint16_t gb_cpu_bc(struct gb *gb) {
+     uint16_t b = gb->cpu.b;
+     uint16_t c = gb->cpu.c;
+
+     return (b << 8) | c;
+}
+
+static void gb_cpu_set_bc(struct gb *gb, uint16_t v) {
+     gb->cpu.b = v >> 8;
+     gb->cpu.c = v & 0xff;
+}
+
+static uint16_t gb_cpu_de(struct gb *gb) {
+     uint16_t d = gb->cpu.d;
+     uint16_t e = gb->cpu.e;
+
+     return (d << 8) | e;
+}
+
+static void gb_cpu_set_de(struct gb *gb, uint16_t v) {
+     gb->cpu.d = v >> 8;
+     gb->cpu.e = v & 0xff;
 }
 
 static uint16_t gb_cpu_hl(struct gb *gb) {
@@ -50,6 +78,10 @@ static void gb_cpu_dump(struct gb *gb) {
              gb_memory_readb(gb, cpu->sp + 1),
              gb_memory_readb(gb, cpu->sp + 2));
      fprintf(stderr, "A : 0x%02x\n",   cpu->a);
+     fprintf(stderr, "B : 0x%02x  C : 0x%02x  BC : 0x%04x\n",
+             cpu->b, cpu->c, gb_cpu_bc(gb));
+     fprintf(stderr, "D : 0x%02x  E : 0x%02x  DE : 0x%04x\n",
+             cpu->d, cpu->e, gb_cpu_de(gb));
      fprintf(stderr, "H : 0x%02x  L : 0x%02x  HL : 0x%04x\n",
              cpu->h, cpu->l, gb_cpu_hl(gb));
      fprintf(stderr, "\n");
@@ -194,6 +226,38 @@ static void gb_i_add_hl_sp(struct gb *gb) {
      gb_cpu_set_hl(gb, hl);
 }
 
+static void gb_i_inc_sp(struct gb *gb) {
+     uint16_t sp = gb->cpu.sp;
+
+     sp = (sp + 1) & 0xffff;
+
+     gb->cpu.sp = sp;
+}
+
+static void gb_i_inc_bc(struct gb *gb) {
+     uint16_t bc = gb_cpu_bc(gb);
+
+     bc = (bc + 1) & 0xffff;
+
+     gb_cpu_set_bc(gb, bc);
+}
+
+static void gb_i_inc_de(struct gb *gb) {
+     uint16_t de = gb_cpu_de(gb);
+
+     de = (de + 1) & 0xffff;
+
+     gb_cpu_set_de(gb, de);
+}
+
+static void gb_i_inc_hl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     hl = (hl + 1) & 0xffff;
+
+     gb_cpu_set_hl(gb, hl);
+}
+
 /*********
  * Loads *
  *********/
@@ -271,7 +335,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_nop,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_bc,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -288,7 +352,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_de,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -305,7 +369,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_ld_hl_i16,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_hl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -322,7 +386,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_ld_sp_i16,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_sp,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
