@@ -6,6 +6,8 @@ void gb_cpu_reset(struct gb *gb) {
 
      cpu->sp = 0xfffe;
      cpu->a  = 0;
+     cpu->h  = 0;
+     cpu->l  = 0;
 
      cpu->f_z = false;
      cpu->f_n = false;
@@ -15,6 +17,18 @@ void gb_cpu_reset(struct gb *gb) {
      /* XXX For the time being we don't emulate the BOOTROM so we start the
       * execution just past it */
      cpu->pc = 0x100;
+}
+
+static uint16_t gb_cpu_hl(struct gb *gb) {
+     uint16_t h = gb->cpu.h;
+     uint16_t l = gb->cpu.l;
+
+     return (h << 8) | l;
+}
+
+static void gb_cpu_set_hl(struct gb *gb, uint16_t v) {
+     gb->cpu.h = v >> 8;
+     gb->cpu.l = v & 0xff;
 }
 
 static void gb_cpu_dump(struct gb *gb) {
@@ -32,6 +46,8 @@ static void gb_cpu_dump(struct gb *gb) {
              gb_memory_readb(gb, cpu->pc + 2));
      fprintf(stderr, "SP: 0x%04x\n", cpu->sp);
      fprintf(stderr, "A : 0x%02x\n",   cpu->a);
+     fprintf(stderr, "H : 0x%02x  L : 0x%02x  HL : 0x%04x\n",
+             cpu->h, cpu->l, gb_cpu_hl(gb));
      fprintf(stderr, "\n");
 }
 
@@ -177,6 +193,12 @@ static void gb_i_ld_sp_i16(struct gb *gb) {
      gb->cpu.sp = i16;
 }
 
+static void gb_i_ld_hl_i16(struct gb *gb) {
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     gb_cpu_set_hl(gb, i16);
+}
+
 /***************
  * Jumps/Calls *
  ***************/
@@ -238,7 +260,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      // 0x20
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_hl_i16,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
