@@ -8,6 +8,10 @@ struct gb_cpu {
      uint16_t sp;
      /* A register */
      uint8_t a;
+     /* H register */
+     uint8_t h;
+     /* L register */
+     uint8_t l;
 
      /* Zero flag */
      bool f_z;
