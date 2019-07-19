@@ -214,6 +214,32 @@ static void gb_i_add_sp_si8(struct gb *gb) {
      cpu->sp = r;
 }
 
+static void gb_i_add_hl_bc(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t bc = gb_cpu_bc(gb);
+
+     hl = gb_cpu_addw_set_flags(gb, hl, bc);
+
+     gb_cpu_set_hl(gb, hl);
+}
+
+static void gb_i_add_hl_de(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t de = gb_cpu_de(gb);
+
+     hl = gb_cpu_addw_set_flags(gb, hl, de);
+
+     gb_cpu_set_hl(gb, hl);
+}
+
+static void gb_i_add_hl_hl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     hl = gb_cpu_addw_set_flags(gb, hl, hl);
+
+     gb_cpu_set_hl(gb, hl);
+}
+
 static void gb_i_add_hl_sp(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
 
@@ -547,7 +573,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_add_hl_bc,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -564,7 +590,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_add_hl_de,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -581,7 +607,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_add_hl_hl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
