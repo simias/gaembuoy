@@ -344,6 +344,174 @@ static void gb_i_push_hl(struct gb *gb) {
      gb_cpu_pushw(gb, hl);
 }
 
+static void gb_i_ld_a_b(struct gb *gb) {
+     gb->cpu.a = gb->cpu.b;
+}
+
+static void gb_i_ld_a_c(struct gb *gb) {
+     gb->cpu.a = gb->cpu.c;
+}
+
+static void gb_i_ld_a_d(struct gb *gb) {
+     gb->cpu.a = gb->cpu.d;
+}
+
+static void gb_i_ld_a_e(struct gb *gb) {
+     gb->cpu.a = gb->cpu.e;
+}
+
+static void gb_i_ld_a_h(struct gb *gb) {
+     gb->cpu.a = gb->cpu.h;
+}
+
+static void gb_i_ld_a_l(struct gb *gb) {
+     gb->cpu.a = gb->cpu.l;
+}
+
+static void gb_i_ld_b_a(struct gb *gb) {
+     gb->cpu.b = gb->cpu.a;
+}
+
+static void gb_i_ld_b_c(struct gb *gb) {
+     gb->cpu.b = gb->cpu.c;
+}
+
+static void gb_i_ld_b_d(struct gb *gb) {
+     gb->cpu.b = gb->cpu.d;
+}
+
+static void gb_i_ld_b_e(struct gb *gb) {
+     gb->cpu.b = gb->cpu.e;
+}
+
+static void gb_i_ld_b_h(struct gb *gb) {
+     gb->cpu.b = gb->cpu.h;
+}
+
+static void gb_i_ld_b_l(struct gb *gb) {
+     gb->cpu.b = gb->cpu.l;
+}
+
+static void gb_i_ld_c_a(struct gb *gb) {
+     gb->cpu.c = gb->cpu.a;
+}
+
+static void gb_i_ld_c_b(struct gb *gb) {
+     gb->cpu.c = gb->cpu.b;
+}
+
+static void gb_i_ld_c_d(struct gb *gb) {
+     gb->cpu.c = gb->cpu.d;
+}
+
+static void gb_i_ld_c_e(struct gb *gb) {
+     gb->cpu.c = gb->cpu.e;
+}
+
+static void gb_i_ld_c_h(struct gb *gb) {
+     gb->cpu.c = gb->cpu.h;
+}
+
+static void gb_i_ld_c_l(struct gb *gb) {
+     gb->cpu.c = gb->cpu.l;
+}
+
+static void gb_i_ld_d_a(struct gb *gb) {
+     gb->cpu.d = gb->cpu.a;
+}
+
+static void gb_i_ld_d_b(struct gb *gb) {
+     gb->cpu.d = gb->cpu.b;
+}
+
+static void gb_i_ld_d_c(struct gb *gb) {
+     gb->cpu.d = gb->cpu.c;
+}
+
+static void gb_i_ld_d_e(struct gb *gb) {
+     gb->cpu.d = gb->cpu.e;
+}
+
+static void gb_i_ld_d_h(struct gb *gb) {
+     gb->cpu.d = gb->cpu.h;
+}
+
+static void gb_i_ld_d_l(struct gb *gb) {
+     gb->cpu.d = gb->cpu.l;
+}
+
+static void gb_i_ld_e_a(struct gb *gb) {
+     gb->cpu.e = gb->cpu.a;
+}
+
+static void gb_i_ld_e_b(struct gb *gb) {
+     gb->cpu.e = gb->cpu.b;
+}
+
+static void gb_i_ld_e_c(struct gb *gb) {
+     gb->cpu.e = gb->cpu.c;
+}
+
+static void gb_i_ld_e_d(struct gb *gb) {
+     gb->cpu.e = gb->cpu.d;
+}
+
+static void gb_i_ld_e_h(struct gb *gb) {
+     gb->cpu.e = gb->cpu.h;
+}
+
+static void gb_i_ld_e_l(struct gb *gb) {
+     gb->cpu.e = gb->cpu.l;
+}
+
+static void gb_i_ld_h_a(struct gb *gb) {
+     gb->cpu.h = gb->cpu.a;
+}
+
+static void gb_i_ld_h_b(struct gb *gb) {
+     gb->cpu.h = gb->cpu.b;
+}
+
+static void gb_i_ld_h_c(struct gb *gb) {
+     gb->cpu.h = gb->cpu.c;
+}
+
+static void gb_i_ld_h_d(struct gb *gb) {
+     gb->cpu.h = gb->cpu.d;
+}
+
+static void gb_i_ld_h_e(struct gb *gb) {
+     gb->cpu.h = gb->cpu.e;
+}
+
+static void gb_i_ld_h_l(struct gb *gb) {
+     gb->cpu.h = gb->cpu.l;
+}
+
+static void gb_i_ld_l_a(struct gb *gb) {
+     gb->cpu.l = gb->cpu.a;
+}
+
+static void gb_i_ld_l_b(struct gb *gb) {
+     gb->cpu.l = gb->cpu.b;
+}
+
+static void gb_i_ld_l_c(struct gb *gb) {
+     gb->cpu.l = gb->cpu.c;
+}
+
+static void gb_i_ld_l_d(struct gb *gb) {
+     gb->cpu.l = gb->cpu.d;
+}
+
+static void gb_i_ld_l_e(struct gb *gb) {
+     gb->cpu.l = gb->cpu.e;
+}
+
+static void gb_i_ld_l_h(struct gb *gb) {
+     gb->cpu.l = gb->cpu.h;
+}
+
 /***************
  * Jumps/Calls *
  ***************/
@@ -438,56 +606,56 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_a_i8,
      gb_i_unimplemented,
      // 0x40
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_nop,
+     gb_i_ld_b_c,
+     gb_i_ld_b_d,
+     gb_i_ld_b_e,
+     gb_i_ld_b_h,
+     gb_i_ld_b_l,
      gb_i_ld_b_mhl,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_b_a,
+     gb_i_ld_c_b,
+     gb_i_nop,
+     gb_i_ld_c_d,
+     gb_i_ld_c_e,
+     gb_i_ld_c_h,
+     gb_i_ld_c_l,
      gb_i_ld_c_mhl,
-     gb_i_unimplemented,
+     gb_i_ld_c_a,
      // 0x50
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_d_b,
+     gb_i_ld_d_c,
+     gb_i_nop,
+     gb_i_ld_d_e,
+     gb_i_ld_d_h,
+     gb_i_ld_d_l,
      gb_i_ld_d_mhl,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_d_a,
+     gb_i_ld_e_b,
+     gb_i_ld_e_c,
+     gb_i_ld_e_d,
+     gb_i_nop,
+     gb_i_ld_e_h,
+     gb_i_ld_e_l,
      gb_i_ld_e_mhl,
-     gb_i_unimplemented,
+     gb_i_ld_e_a,
      // 0x60
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_h_b,
+     gb_i_ld_h_c,
+     gb_i_ld_h_d,
+     gb_i_ld_h_e,
+     gb_i_nop,
+     gb_i_ld_h_l,
      gb_i_ld_h_mhl,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_h_a,
+     gb_i_ld_l_b,
+     gb_i_ld_l_c,
+     gb_i_ld_l_d,
+     gb_i_ld_l_e,
+     gb_i_ld_l_h,
+     gb_i_nop,
      gb_i_ld_l_mhl,
-     gb_i_unimplemented,
+     gb_i_ld_l_a,
      // 0x70
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -497,14 +665,14 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_a_b,
+     gb_i_ld_a_c,
+     gb_i_ld_a_d,
+     gb_i_ld_a_e,
+     gb_i_ld_a_h,
+     gb_i_ld_a_l,
      gb_i_ld_a_mhl,
-     gb_i_unimplemented,
+     gb_i_nop,
      // 0x80
      gb_i_unimplemented,
      gb_i_unimplemented,
