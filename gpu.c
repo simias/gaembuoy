@@ -25,3 +25,8 @@ void gb_gpu_set_lcdc(struct gb *gb, uint8_t ctrl) {
 uint8_t gb_gpu_get_lcdc(struct gb *gb) {
      return gb->gpu.lcdc;
 }
+
+uint8_t gb_gpu_get_ly(struct gb *gb) {
+     /* TODO: Implement me */
+     return 0;
+}
