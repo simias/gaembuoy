@@ -20,6 +20,10 @@ struct gb_gpu {
      uint8_t ly;
      /* Background palette */
      uint8_t bgp;
+     /* Sprite palette 0 */
+     uint8_t obp0;
+     /* Sprite palette 1 */
+     uint8_t obp1;
 };
 
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat);
