@@ -21,3 +21,7 @@ void gb_gpu_set_lcdc(struct gb *gb, uint8_t ctrl) {
      gb->gpu.lcdc = ctrl;
      fprintf(stderr, "GPU LCDC: 0x%02x\n", ctrl);
 }
+
+uint8_t gb_gpu_get_lcdc(struct gb *gb) {
+     return gb->gpu.lcdc;
+}
