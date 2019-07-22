@@ -189,6 +189,23 @@ static uint16_t gb_cpu_addw_set_flags(struct gb *gb, uint16_t a, uint16_t b) {
      return r;
 }
 
+static uint8_t gb_cpu_sub_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     /* Check for carry using 16bit arithmetic */
+     uint16_t al = a;
+     uint16_t bl = b;
+
+     uint16_t r = al - bl;
+
+     cpu->f_z = !(r & 0xff);
+     cpu->f_n = true;
+     cpu->f_h = (a ^ b ^ r) & 0x10;
+     cpu->f_c = r & 0x100;
+
+     return r;
+}
+
 static void gb_i_sub_a_a(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
@@ -341,6 +358,12 @@ static void gb_i_inc_hl(struct gb *gb) {
      hl = (hl + 1) & 0xffff;
 
      gb_cpu_set_hl(gb, hl);
+}
+
+static void gb_i_cp_a_i8(struct gb *gb) {
+     uint8_t i8 = gb_cpu_next_i8(gb);
+
+     gb_cpu_sub_set_flags(gb, gb->cpu.a, i8);
 }
 
 /*********
@@ -980,7 +1003,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_cp_a_i8,
      gb_i_unimplemented,
 };
 
