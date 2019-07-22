@@ -18,6 +18,8 @@ struct gb_gpu {
      uint8_t lcdc;
      /* LY register */
      uint8_t ly;
+     /* Background palette */
+     uint8_t bgp;
 };
 
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat);

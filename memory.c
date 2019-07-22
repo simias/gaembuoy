@@ -20,6 +20,8 @@
 #define REG_SCX         0xff43U
 /* Current line */
 #define REG_LY          0xff44U
+/* Background palette */
+#define REG_BGP         0xff47U
 /* Interrupt Enable register */
 #define REG_IE          0xffffU
 
@@ -51,6 +53,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_LY) {
           return gb_gpu_get_ly(gb);
+     }
+
+     if (addr == REG_BGP) {
+          return gb->gpu.bgp;
      }
 
      printf("Unsupported read at address 0x%04x\n", addr);
@@ -93,6 +99,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_SCX) {
           gb->gpu.scx = val;
+          return;
+     }
+
+     if (addr == REG_BGP) {
+          gb->gpu.bgp = val;
           return;
      }
 
