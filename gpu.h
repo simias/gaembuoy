@@ -16,6 +16,8 @@ struct gb_gpu {
      bool iten_mode2;
      /* LCD Control register */
      uint8_t lcdc;
+     /* LY register */
+     uint8_t ly;
 };
 
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat);
