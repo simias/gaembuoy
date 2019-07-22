@@ -694,6 +694,52 @@ static void gb_i_jp_i16(struct gb *gb) {
      gb_cpu_load_pc(gb, i16);
 }
 
+static void gb_i_jr_si8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t i8 = gb_cpu_next_i8(gb);
+     uint16_t pc = cpu->pc;
+
+     pc = pc + (int8_t)i8;
+
+     gb_cpu_load_pc(gb, pc);
+}
+
+static void gb_i_jr_z_si8(struct gb *gb) {
+     if (gb->cpu.f_z) {
+          gb_i_jr_si8(gb);
+     } else {
+          /* Discard immediate value */
+          gb_cpu_next_i8(gb);
+     }
+}
+
+static void gb_i_jr_c_si8(struct gb *gb) {
+     if (gb->cpu.f_c) {
+          gb_i_jr_si8(gb);
+     } else {
+          /* Discard immediate value */
+          gb_cpu_next_i8(gb);
+     }
+}
+
+static void gb_i_jr_nz_si8(struct gb *gb) {
+     if (!gb->cpu.f_z) {
+          gb_i_jr_si8(gb);
+     } else {
+          /* Discard immediate value */
+          gb_cpu_next_i8(gb);
+     }
+}
+
+static void gb_i_jr_nc_si8(struct gb *gb) {
+     if (!gb->cpu.f_c) {
+          gb_i_jr_si8(gb);
+     } else {
+          /* Discard immediate value */
+          gb_cpu_next_i8(gb);
+     }
+}
+
 static void gb_i_call_i16(struct gb *gb) {
      uint16_t i16 = gb_cpu_next_i16(gb);
 
@@ -759,7 +805,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_jr_si8,
      gb_i_add_hl_de,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -768,7 +814,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      // 0x20
-     gb_i_unimplemented,
+     gb_i_jr_nz_si8,
      gb_i_ld_hl_i16,
      gb_i_unimplemented,
      gb_i_inc_hl,
@@ -776,7 +822,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_jr_z_si8,
      gb_i_add_hl_hl,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -785,7 +831,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      // 0x30
-     gb_i_unimplemented,
+     gb_i_jr_nc_si8,
      gb_i_ld_sp_i16,
      gb_i_unimplemented,
      gb_i_inc_sp,
@@ -793,7 +839,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_jr_c_si8,
      gb_i_add_hl_sp,
      gb_i_unimplemented,
      gb_i_unimplemented,
