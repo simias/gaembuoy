@@ -200,6 +200,65 @@ static void gb_i_sub_a_a(struct gb *gb) {
      cpu->f_c = false;
 }
 
+static uint8_t gb_cpu_add_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     /* Check for carry using 16bit arithmetic */
+     uint16_t al = a;
+     uint16_t bl = b;
+
+     uint16_t r = al + bl;
+
+     cpu->f_z = !(r & 0xff);
+     cpu->f_n = false;
+     cpu->f_h = (a ^ b ^ r) & 0x10;
+     cpu->f_c = r & 0x100;
+
+     return r;
+}
+
+static void gb_i_add_a_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->a);
+}
+
+static void gb_i_add_a_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->b);
+}
+
+static void gb_i_add_a_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->c);
+}
+
+static void gb_i_add_a_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->d);
+}
+
+static void gb_i_add_a_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->e);
+}
+
+static void gb_i_add_a_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->h);
+}
+
+static void gb_i_add_a_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_add_set_flags(gb, cpu->a, cpu->l);
+}
+
 static void gb_i_add_sp_si8(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      /* Offset is signed */
@@ -764,14 +823,14 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_a_mhl,
      gb_i_nop,
      // 0x80
+     gb_i_add_a_b,
+     gb_i_add_a_c,
+     gb_i_add_a_d,
+     gb_i_add_a_e,
+     gb_i_add_a_h,
+     gb_i_add_a_l,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_add_a_a,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
