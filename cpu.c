@@ -480,6 +480,20 @@ static void gb_i_ld_a_mhl(struct gb *gb) {
      gb->cpu.a = v;
 }
 
+static void gb_i_ld_a_mbc(struct gb *gb) {
+     uint16_t bc = gb_cpu_bc(gb);
+     uint8_t v = gb_memory_readb(gb, bc);
+
+     gb->cpu.a = v;
+}
+
+static void gb_i_ld_a_mde(struct gb *gb) {
+     uint16_t de = gb_cpu_de(gb);
+     uint8_t v = gb_memory_readb(gb, de);
+
+     gb->cpu.a = v;
+}
+
 static void gb_i_ld_b_mhl(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
      uint8_t v = gb_memory_readb(gb, hl);
@@ -834,7 +848,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_add_hl_bc,
-     gb_i_unimplemented,
+     gb_i_ld_a_mbc,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -851,7 +865,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_jr_si8,
      gb_i_add_hl_de,
-     gb_i_unimplemented,
+     gb_i_ld_a_mde,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
