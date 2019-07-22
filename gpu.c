@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "gb.h"
 
+/* Total number of lines (including vertical blanking) */
+#define VTOTAL 154U
+
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat) {
      struct gb_gpu *gpu = &gb->gpu;
 
@@ -27,6 +30,10 @@ uint8_t gb_gpu_get_lcdc(struct gb *gb) {
 }
 
 uint8_t gb_gpu_get_ly(struct gb *gb) {
-     /* TODO: Implement me */
-     return 0;
+     struct gb_gpu *gpu = &gb->gpu;
+
+     /* XXX: Hack to prevent infinite loops in games waiting for a particular
+      * value of LY */
+     gpu->ly = (gpu->ly + 1) % VTOTAL;
+     return gpu->ly;
 }
