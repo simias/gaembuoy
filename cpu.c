@@ -685,6 +685,30 @@ static void gb_i_ret(struct gb *gb) {
      gb_cpu_load_pc(gb, addr);
 }
 
+static void gb_i_ret_z(struct gb *gb) {
+     if (gb->cpu.f_z) {
+          gb_i_ret(gb);
+     }
+}
+
+static void gb_i_ret_c(struct gb *gb) {
+     if (gb->cpu.f_c) {
+          gb_i_ret(gb);
+     }
+}
+
+static void gb_i_ret_nz(struct gb *gb) {
+     if (!gb->cpu.f_z) {
+          gb_i_ret(gb);
+     }
+}
+
+static void gb_i_ret_nc(struct gb *gb) {
+     if (!gb->cpu.f_c) {
+          gb_i_ret(gb);
+     }
+}
+
 static gb_instruction_f gb_instructions[0x100] = {
      // 0x00
      gb_i_nop,
@@ -891,7 +915,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      // 0xc0
-     gb_i_unimplemented,
+     gb_i_ret_nz,
      gb_i_pop_bc,
      gb_i_unimplemented,
      gb_i_jp_i16,
@@ -899,7 +923,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ret_z,
      gb_i_ret,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -908,7 +932,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      // 0xd0
-     gb_i_unimplemented,
+     gb_i_ret_nc,
      gb_i_pop_de,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -916,7 +940,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ret_c,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
