@@ -473,11 +473,49 @@ static void gb_i_ld_mhl_a(struct gb *gb) {
      gb_memory_writeb(gb, hl, a);
 }
 
+static void gb_i_ldi_mhl_a(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t a = gb->cpu.a;
+
+     gb_memory_writeb(gb, hl, a);
+
+     hl = (hl + 1) & 0xffff;
+     gb_cpu_set_hl(gb, hl);
+}
+
+static void gb_i_ldd_mhl_a(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t a = gb->cpu.a;
+
+     gb_memory_writeb(gb, hl, a);
+
+     hl = (hl - 1) & 0xffff;
+     gb_cpu_set_hl(gb, hl);
+}
+
 static void gb_i_ld_a_mhl(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
      uint8_t v = gb_memory_readb(gb, hl);
 
      gb->cpu.a = v;
+}
+
+static void gb_i_ldi_a_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     gb->cpu.a = gb_memory_readb(gb, hl);
+
+     hl = (hl + 1) & 0xffff;
+     gb_cpu_set_hl(gb, hl);
+}
+
+static void gb_i_ldd_a_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     gb->cpu.a = gb_memory_readb(gb, hl);
+
+     hl = (hl - 1) & 0xffff;
+     gb_cpu_set_hl(gb, hl);
 }
 
 static void gb_i_ld_a_mbc(struct gb *gb) {
@@ -874,7 +912,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      // 0x20
      gb_i_jr_nz_si8,
      gb_i_ld_hl_i16,
-     gb_i_unimplemented,
+     gb_i_ldi_mhl_a,
      gb_i_inc_hl,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -882,7 +920,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_jr_z_si8,
      gb_i_add_hl_hl,
-     gb_i_unimplemented,
+     gb_i_ldi_a_mhl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -891,7 +929,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      // 0x30
      gb_i_jr_nc_si8,
      gb_i_ld_sp_i16,
-     gb_i_unimplemented,
+     gb_i_ldd_mhl_a,
      gb_i_inc_sp,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -899,7 +937,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_jr_c_si8,
      gb_i_add_hl_sp,
-     gb_i_unimplemented,
+     gb_i_ldd_a_mhl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
