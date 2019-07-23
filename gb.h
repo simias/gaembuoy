@@ -20,6 +20,8 @@ struct gb {
      uint8_t iram[0x2000];
      /* Zero-page RAM */
      uint8_t zram[0x7f];
+     /* Video RAM */
+     uint8_t vram[0x2000];
 };
 
 static inline void die(void) {
