@@ -54,6 +54,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb_gpu_get_lcdc(gb);
      }
 
+     if (addr == REG_LCD_STAT) {
+          return gb_gpu_get_lcd_stat(gb);
+     }
+
      if (addr == REG_SCY) {
           return gb->gpu.scy;
      }

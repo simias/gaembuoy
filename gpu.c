@@ -20,6 +20,21 @@ void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat) {
              gpu->iten_lyc);
 }
 
+uint8_t gb_gpu_get_lcd_stat(struct gb *gb) {
+     struct gb_gpu *gpu = &gb->gpu;
+     uint8_t r = 0;
+
+     r |= gpu->iten_mode0 << 3;
+     r |= gpu->iten_mode1 << 4;
+     r |= gpu->iten_mode2 << 5;
+     r |= gpu->iten_lyc << 6;
+
+     /* XXX: Set LYC coincidence */
+     /* XXX: Set mode bits */
+
+     return r;
+}
+
 void gb_gpu_set_lcdc(struct gb *gb, uint8_t ctrl) {
      gb->gpu.lcdc = ctrl;
      fprintf(stderr, "GPU LCDC: 0x%02x\n", ctrl);
