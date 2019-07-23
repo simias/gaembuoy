@@ -440,6 +440,38 @@ static void gb_i_inc_hl(struct gb *gb) {
      gb_cpu_set_hl(gb, hl);
 }
 
+static void gb_i_dec_sp(struct gb *gb) {
+     uint16_t sp = gb->cpu.sp;
+
+     sp = (sp - 1) & 0xffff;
+
+     gb->cpu.sp = sp;
+}
+
+static void gb_i_dec_bc(struct gb *gb) {
+     uint16_t bc = gb_cpu_bc(gb);
+
+     bc = (bc - 1) & 0xffff;
+
+     gb_cpu_set_bc(gb, bc);
+}
+
+static void gb_i_dec_de(struct gb *gb) {
+     uint16_t de = gb_cpu_de(gb);
+
+     de = (de - 1) & 0xffff;
+
+     gb_cpu_set_de(gb, de);
+}
+
+static void gb_i_dec_hl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     hl = (hl - 1) & 0xffff;
+
+     gb_cpu_set_hl(gb, hl);
+}
+
 static void gb_i_cp_a_i8(struct gb *gb) {
      uint8_t i8 = gb_cpu_next_i8(gb);
 
@@ -990,7 +1022,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_add_hl_bc,
      gb_i_ld_a_mbc,
-     gb_i_unimplemented,
+     gb_i_dec_bc,
      gb_i_inc_c,
      gb_i_dec_c,
      gb_i_ld_c_i8,
@@ -1007,7 +1039,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_jr_si8,
      gb_i_add_hl_de,
      gb_i_ld_a_mde,
-     gb_i_unimplemented,
+     gb_i_dec_de,
      gb_i_inc_e,
      gb_i_dec_e,
      gb_i_ld_e_i8,
@@ -1024,7 +1056,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_jr_z_si8,
      gb_i_add_hl_hl,
      gb_i_ldi_a_mhl,
-     gb_i_unimplemented,
+     gb_i_dec_hl,
      gb_i_inc_l,
      gb_i_dec_l,
      gb_i_ld_l_i8,
@@ -1041,7 +1073,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_jr_c_si8,
      gb_i_add_hl_sp,
      gb_i_ldd_a_mhl,
-     gb_i_unimplemented,
+     gb_i_dec_sp,
      gb_i_inc_a,
      gb_i_dec_a,
      gb_i_ld_a_i8,
