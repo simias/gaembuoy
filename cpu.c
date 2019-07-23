@@ -171,6 +171,90 @@ static void gb_i_di(struct gb *gb) {
  * Arithmetic *
  **************/
 
+static uint8_t gb_cpu_inc(struct gb *gb, uint8_t v) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     uint8_t r = (v + 1) & 0xff;
+
+     cpu->f_z = (r == 0);
+     cpu->f_n = false;
+     /* We'll have a half-carry if the low nibble is 0xf */
+     cpu->f_h = ((v & 0xf) == 0xf);
+     /* Carry is not modified by this instruction */
+
+     return r;
+}
+
+static uint8_t gb_cpu_dec(struct gb *gb, uint8_t v) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     uint8_t r = (v - 1) & 0xff;
+
+     cpu->f_z = (r == 0);
+     cpu->f_n = true;
+     /* We'll have a half-carry if the low nibble is 0 */
+     cpu->f_h = ((v & 0xf) == 0);
+     /* Carry is not modified by this instruction */
+
+     return r;
+}
+
+static void gb_i_inc_a(struct gb *gb) {
+     gb->cpu.a = gb_cpu_inc(gb, gb->cpu.a);
+}
+
+static void gb_i_inc_b(struct gb *gb) {
+     gb->cpu.b = gb_cpu_inc(gb, gb->cpu.b);
+}
+
+static void gb_i_inc_c(struct gb *gb) {
+     gb->cpu.c = gb_cpu_inc(gb, gb->cpu.c);
+}
+
+static void gb_i_inc_d(struct gb *gb) {
+     gb->cpu.d = gb_cpu_inc(gb, gb->cpu.d);
+}
+
+static void gb_i_inc_e(struct gb *gb) {
+     gb->cpu.e = gb_cpu_inc(gb, gb->cpu.e);
+}
+
+static void gb_i_inc_h(struct gb *gb) {
+     gb->cpu.h = gb_cpu_inc(gb, gb->cpu.h);
+}
+
+static void gb_i_inc_l(struct gb *gb) {
+     gb->cpu.l = gb_cpu_inc(gb, gb->cpu.l);
+}
+
+static void gb_i_dec_a(struct gb *gb) {
+     gb->cpu.a = gb_cpu_dec(gb, gb->cpu.a);
+}
+
+static void gb_i_dec_b(struct gb *gb) {
+     gb->cpu.b = gb_cpu_dec(gb, gb->cpu.b);
+}
+
+static void gb_i_dec_c(struct gb *gb) {
+     gb->cpu.c = gb_cpu_dec(gb, gb->cpu.c);
+}
+
+static void gb_i_dec_d(struct gb *gb) {
+     gb->cpu.d = gb_cpu_dec(gb, gb->cpu.d);
+}
+
+static void gb_i_dec_e(struct gb *gb) {
+     gb->cpu.e = gb_cpu_dec(gb, gb->cpu.e);
+}
+
+static void gb_i_dec_h(struct gb *gb) {
+     gb->cpu.h = gb_cpu_dec(gb, gb->cpu.h);
+}
+
+static void gb_i_dec_l(struct gb *gb) {
+     gb->cpu.l = gb_cpu_dec(gb, gb->cpu.l);
+}
+
 /* Add two 16 bit values, update the CPU flags and return the result */
 static uint16_t gb_cpu_addw_set_flags(struct gb *gb, uint16_t a, uint16_t b) {
      struct gb_cpu *cpu = &gb->cpu;
@@ -884,16 +968,16 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_bc_i16,
      gb_i_ld_mbc_a,
      gb_i_inc_bc,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_b,
+     gb_i_dec_b,
      gb_i_ld_b_i8,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_add_hl_bc,
      gb_i_ld_a_mbc,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_c,
+     gb_i_dec_c,
      gb_i_ld_c_i8,
      gb_i_unimplemented,
      // 0x10
@@ -901,16 +985,16 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_de_i16,
      gb_i_ld_mde_a,
      gb_i_inc_de,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_d,
+     gb_i_dec_d,
      gb_i_ld_d_i8,
      gb_i_unimplemented,
      gb_i_jr_si8,
      gb_i_add_hl_de,
      gb_i_ld_a_mde,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_e,
+     gb_i_dec_e,
      gb_i_ld_e_i8,
      gb_i_unimplemented,
      // 0x20
@@ -918,16 +1002,16 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_hl_i16,
      gb_i_ldi_mhl_a,
      gb_i_inc_hl,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_h,
+     gb_i_dec_h,
      gb_i_ld_h_i8,
      gb_i_unimplemented,
      gb_i_jr_z_si8,
      gb_i_add_hl_hl,
      gb_i_ldi_a_mhl,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_l,
+     gb_i_dec_l,
      gb_i_ld_l_i8,
      gb_i_unimplemented,
      // 0x30
@@ -943,8 +1027,8 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_add_hl_sp,
      gb_i_ldd_a_mhl,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_a,
+     gb_i_dec_a,
      gb_i_ld_a_i8,
      gb_i_unimplemented,
      // 0x40
