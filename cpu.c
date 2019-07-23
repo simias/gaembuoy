@@ -446,6 +446,25 @@ static void gb_i_cp_a_i8(struct gb *gb) {
      gb_cpu_sub_set_flags(gb, gb->cpu.a, i8);
 }
 
+static uint8_t gb_cpu_and_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     uint8_t r = a & b;
+
+     cpu->f_z = (r == 0);
+     cpu->f_n = false;
+     cpu->f_h = true;
+     cpu->f_c = false;
+
+     return r;
+}
+
+static void gb_i_and_a_i8(struct gb *gb) {
+     uint8_t i8 = gb_cpu_next_i8(gb);
+
+     gb->cpu.a = gb_cpu_and_set_flags(gb, gb->cpu.a, i8);
+}
+
 /*********
  * Loads *
  *********/
@@ -1204,7 +1223,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_push_hl,
-     gb_i_unimplemented,
+     gb_i_and_a_i8,
      gb_i_unimplemented,
      gb_i_add_sp_si8,
      gb_i_unimplemented,
