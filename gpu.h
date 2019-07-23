@@ -30,5 +30,6 @@ void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat);
 void gb_gpu_set_lcdc(struct gb *gb, uint8_t stat);
 uint8_t gb_gpu_get_lcdc(struct gb *gb);
 uint8_t gb_gpu_get_ly(struct gb *gb);
+uint8_t gb_gpu_get_lcd_stat(struct gb *gb);
 
 #endif /* _GB_GPU_H_ */
