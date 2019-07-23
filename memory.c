@@ -4,6 +4,9 @@
 /* ROM (bank 0 + 1) */
 #define ROM_BASE        0x0000U
 #define ROM_END         (ROM_BASE + 0x8000U)
+/* Video RAM */
+#define VRAM_BASE       0x8000U
+#define VRAM_END        (VRAM_BASE + 0x2000U)
 /* Internal RAM */
 #define IRAM_BASE       0xc000U
 #define IRAM_END        (IRAM_BASE + 0x2000U)
@@ -41,6 +44,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
           return gb->iram[addr - IRAM_BASE];
+     }
+
+     if (addr >= VRAM_BASE && addr < VRAM_END) {
+          return gb->vram[addr - VRAM_BASE];
      }
 
      if (addr == REG_LCDC) {
@@ -86,6 +93,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
           gb->iram[addr - IRAM_BASE] = val;
+          return;
+     }
+
+     if (addr >= VRAM_BASE && addr < VRAM_END) {
+          gb->vram[addr - VRAM_BASE] = val;
           return;
      }
 
