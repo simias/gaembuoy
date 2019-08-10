@@ -13,6 +13,8 @@
 /* Zero page RAM */
 #define ZRAM_BASE       0xff80U
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
+/* Input buttons register */
+#define REG_INPUT       0xff00U
 /* LCD Control register */
 #define REG_LCDC        0xff40U
 /* LCD Stat register */
@@ -48,6 +50,11 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
           return gb->vram[addr - VRAM_BASE];
+     }
+
+     if (addr == REG_INPUT) {
+          /* TODO */
+          return 0xff;
      }
 
      if (addr == REG_LCDC) {
@@ -102,6 +109,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
           gb->vram[addr - VRAM_BASE] = val;
+          return;
+     }
+
+     if (addr == REG_INPUT) {
+          /* TODO */
           return;
      }
 
