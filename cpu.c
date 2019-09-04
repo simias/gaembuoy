@@ -552,6 +552,16 @@ static void gb_i_or_a_l(struct gb *gb) {
      cpu->a = gb_cpu_or_set_flags(gb, cpu->a, cpu->l);
 }
 
+static void gb_i_cpl_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     /* Complement A */
+     cpu->a = ~cpu->a;
+
+     cpu->f_n = true;
+     cpu->f_h = true;
+}
+
 /*********
  * Loads *
  *********/
@@ -1146,7 +1156,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_l,
      gb_i_dec_l,
      gb_i_ld_l_i8,
-     gb_i_unimplemented,
+     gb_i_cpl_a,
      // 0x30
      gb_i_jr_nc_si8,
      gb_i_ld_sp_i16,
