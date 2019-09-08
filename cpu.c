@@ -140,7 +140,7 @@ static uint16_t gb_cpu_next_i16(struct gb *gb) {
 
 typedef void (*gb_instruction_f)(struct gb *);
 
-static void gb_i_unimplemented(struct gb* gb) {
+static void gb_i_unimplemented(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      uint16_t instruction_pc = (cpu->pc - 1) & 0xffff;
      uint8_t instruction = gb_memory_readb(gb, instruction_pc);
@@ -1396,7 +1396,7 @@ void gb_cpu_run_instruction(struct gb *gb) {
  * Extended CB instruction map
  */
 
-static void gb_i_unimplemented_cb(struct gb* gb) {
+static void gb_i_unimplemented_cb(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      uint16_t instruction_pc = (cpu->pc - 1) & 0xffff;
      uint8_t instruction = gb_memory_readb(gb, instruction_pc);
@@ -1405,6 +1405,70 @@ static void gb_i_unimplemented_cb(struct gb* gb) {
              "Unimplemented instruction 0xCB 0x%02x at 0x%04x\n",
              instruction, instruction_pc);
      die();
+}
+
+static void gb_cpu_swap_set_flags(struct gb *gb, uint8_t *v) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     *v = ((*v << 4) | (*v >> 4)) & 0xff;
+
+     cpu->f_z = (*v == 0);
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = false;
+}
+
+static void gb_i_swap_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->a);
+}
+
+static void gb_i_swap_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->b);
+}
+
+static void gb_i_swap_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->c);
+}
+
+static void gb_i_swap_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->d);
+}
+
+static void gb_i_swap_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->e);
+}
+
+static void gb_i_swap_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->h);
+}
+
+static void gb_i_swap_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_swap_set_flags(gb, &cpu->l);
+}
+
+static void gb_i_swap_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_swap_set_flags(gb, &v);
+
+     gb_memory_writeb(gb, hl, v);
 }
 
 static gb_instruction_f gb_instructions_cb[0x100] = {
@@ -1460,14 +1524,14 @@ static gb_instruction_f gb_instructions_cb[0x100] = {
      gb_i_unimplemented_cb,
      gb_i_unimplemented_cb,
      // 0x30
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
+     gb_i_swap_b,
+     gb_i_swap_c,
+     gb_i_swap_d,
+     gb_i_swap_e,
+     gb_i_swap_h,
+     gb_i_swap_l,
+     gb_i_swap_mhl,
+     gb_i_swap_a,
      gb_i_unimplemented_cb,
      gb_i_unimplemented_cb,
      gb_i_unimplemented_cb,
