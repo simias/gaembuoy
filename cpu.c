@@ -566,6 +566,82 @@ static void gb_i_cpl_a(struct gb *gb) {
      cpu->f_h = true;
 }
 
+/* Rotate Left A */
+static void gb_i_rlca(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t a = cpu->a;
+     uint8_t c;
+
+     c = a >> 7;
+     a = (a << 1) & 0xff;
+     a |= c;
+
+     cpu->a = a;
+
+     cpu->f_z = false;
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = c;
+}
+
+/* Rotate Left A through carry */
+static void gb_i_rla(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t a = cpu->a;
+     uint8_t c = cpu->f_c;
+     uint8_t new_c;
+
+     /* Current carry goes to LSB of A, MSB of A becomes new carry */
+     new_c = a >> 7;
+     a = (a << 1) & 0xff;
+     a |= c;
+
+     cpu->a = a;
+
+     cpu->f_z = false;
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = new_c;
+}
+
+/* Rotate Right A */
+static void gb_i_rrca(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t a = cpu->a;
+     uint8_t c;
+
+     c = a & 1;
+     a = a >> 1;
+     a |= (c << 7);
+
+     cpu->a = a;
+
+     cpu->f_z = false;
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = c;
+}
+
+/* Rotate Right A through carry */
+static void gb_i_rra(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t a = cpu->a;
+     uint8_t c = cpu->f_c;
+     uint8_t new_c;
+
+     /* Current carry goes to MSB of A, LSB of A becomes new carry */
+     new_c = a & 1;
+     a = a >> 1;
+     a |= (c << 7);
+
+     cpu->a = a;
+
+     cpu->f_z = false;
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = new_c;
+}
+
 /*********
  * Loads *
  *********/
@@ -1120,7 +1196,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_b,
      gb_i_dec_b,
      gb_i_ld_b_i8,
-     gb_i_unimplemented,
+     gb_i_rlca,
      gb_i_unimplemented,
      gb_i_add_hl_bc,
      gb_i_ld_a_mbc,
@@ -1128,7 +1204,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_c,
      gb_i_dec_c,
      gb_i_ld_c_i8,
-     gb_i_unimplemented,
+     gb_i_rrca,
      // 0x10
      gb_i_unimplemented,
      gb_i_ld_de_i16,
@@ -1137,7 +1213,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_d,
      gb_i_dec_d,
      gb_i_ld_d_i8,
-     gb_i_unimplemented,
+     gb_i_rla,
      gb_i_jr_si8,
      gb_i_add_hl_de,
      gb_i_ld_a_mde,
@@ -1145,7 +1221,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_e,
      gb_i_dec_e,
      gb_i_ld_e_i8,
-     gb_i_unimplemented,
+     gb_i_rra,
      // 0x20
      gb_i_jr_nz_si8,
      gb_i_ld_hl_i16,
