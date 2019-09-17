@@ -421,6 +421,83 @@ static void gb_i_add_a_i8(struct gb *gb) {
      cpu->a = gb_cpu_add_set_flags(gb, cpu->a, i8);
 }
 
+/* Add with carry and set flags */
+static uint8_t gb_cpu_adc_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     /* Check for carry using 16bit arithmetic */
+     uint16_t al = a;
+     uint16_t bl = b;
+     uint16_t c = cpu->f_c;
+
+     uint16_t r = al + bl + c;
+
+     cpu->f_z = !(r & 0xff);
+     cpu->f_n = false;
+     cpu->f_h = (a ^ b ^ r) & 0x10;
+     cpu->f_c = r & 0x100;
+
+     return r;
+}
+
+static void gb_i_adc_a_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->a);
+}
+
+static void gb_i_adc_a_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->b);
+}
+
+static void gb_i_adc_a_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->c);
+}
+
+static void gb_i_adc_a_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->d);
+}
+
+static void gb_i_adc_a_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->e);
+}
+
+static void gb_i_adc_a_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->h);
+}
+
+static void gb_i_adc_a_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, cpu->l);
+}
+
+static void gb_i_adc_a_mhl(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, v);
+}
+
+static void gb_i_adc_a_i8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t i8 = gb_cpu_next_i8(gb);
+
+     cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, i8);
+}
+
 static void gb_i_add_sp_si8(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      /* Offset is signed */
@@ -1495,14 +1572,14 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_add_a_l,
      gb_i_add_a_mhl,
      gb_i_add_a_a,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_adc_a_b,
+     gb_i_adc_a_c,
+     gb_i_adc_a_d,
+     gb_i_adc_a_e,
+     gb_i_adc_a_h,
+     gb_i_adc_a_l,
+     gb_i_adc_a_mhl,
+     gb_i_adc_a_a,
      // 0x90
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -1569,7 +1646,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_op_cb,
      gb_i_unimplemented,
      gb_i_call_i16,
-     gb_i_unimplemented,
+     gb_i_adc_a_i8,
      gb_i_unimplemented,
      // 0xd0
      gb_i_ret_nc,
