@@ -169,6 +169,24 @@ static void gb_i_stop(struct gb *gb) {
      die();
 }
 
+/* Set Carry Flag */
+static void gb_i_scf(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = true;
+}
+
+/* Complement Carry Flag */
+static void gb_i_ccf(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = !cpu->f_c;
+}
+
 /**************
  * Arithmetic *
  **************/
@@ -1326,7 +1344,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_mhl,
      gb_i_dec_mhl,
      gb_i_ld_mhl_i8,
-     gb_i_unimplemented,
+     gb_i_scf,
      gb_i_jr_c_si8,
      gb_i_add_hl_sp,
      gb_i_ldd_a_mhl,
@@ -1334,7 +1352,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_a,
      gb_i_dec_a,
      gb_i_ld_a_i8,
-     gb_i_unimplemented,
+     gb_i_ccf,
      // 0x40
      gb_i_nop,
      gb_i_ld_b_c,
