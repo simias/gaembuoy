@@ -167,6 +167,12 @@ static void gb_i_di(struct gb *gb) {
      // XXX TODO: disable interrupts
 }
 
+static void gb_i_stop(struct gb *gb) {
+     // XXX TODO: stop CPU and screen until button press
+     fprintf(stderr, "Implement STOP!\n");
+     die();
+}
+
 /**************
  * Arithmetic *
  **************/
@@ -1214,7 +1220,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_c_i8,
      gb_i_rrca,
      // 0x10
-     gb_i_unimplemented,
+     gb_i_stop,
      gb_i_ld_de_i16,
      gb_i_ld_mde_a,
      gb_i_inc_de,
