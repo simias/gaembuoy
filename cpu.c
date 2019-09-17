@@ -752,6 +752,13 @@ static void gb_i_ld_l_i8(struct gb *gb) {
      gb->cpu.l = i8;
 }
 
+static void gb_i_ld_mhl_i8(struct gb *gb) {
+     uint8_t i8 = gb_cpu_next_i8(gb);
+     uint16_t hl = gb_cpu_hl(gb);
+
+     gb_memory_writeb(gb, hl, i8);
+}
+
 static void gb_i_ld_mi16_a(struct gb *gb) {
      uint16_t i16 = gb_cpu_next_i16(gb);
 
@@ -1318,7 +1325,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_sp,
      gb_i_inc_mhl,
      gb_i_dec_mhl,
-     gb_i_unimplemented,
+     gb_i_ld_mhl_i8,
      gb_i_unimplemented,
      gb_i_jr_c_si8,
      gb_i_add_hl_sp,
