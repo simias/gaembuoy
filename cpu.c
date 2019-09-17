@@ -229,6 +229,15 @@ static void gb_i_inc_l(struct gb *gb) {
      gb->cpu.l = gb_cpu_inc(gb, gb->cpu.l);
 }
 
+static void gb_i_inc_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     v = gb_cpu_inc(gb, v);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
 static void gb_i_dec_a(struct gb *gb) {
      gb->cpu.a = gb_cpu_dec(gb, gb->cpu.a);
 }
@@ -255,6 +264,15 @@ static void gb_i_dec_h(struct gb *gb) {
 
 static void gb_i_dec_l(struct gb *gb) {
      gb->cpu.l = gb_cpu_dec(gb, gb->cpu.l);
+}
+
+static void gb_i_dec_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v = gb_memory_readb(gb, hl);
+
+     v = gb_cpu_dec(gb, v);
+
+     gb_memory_writeb(gb, hl, v);
 }
 
 /* Add two 16 bit values, update the CPU flags and return the result */
@@ -1298,8 +1316,8 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_sp_i16,
      gb_i_ldd_mhl_a,
      gb_i_inc_sp,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_inc_mhl,
+     gb_i_dec_mhl,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_jr_c_si8,
