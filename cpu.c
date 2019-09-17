@@ -648,6 +648,50 @@ static void gb_i_rra(struct gb *gb) {
      cpu->f_c = new_c;
 }
 
+/* Decimal adjust `A` for BCD operations */
+static void gb_i_daa(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t a = cpu->a;
+     uint8_t adj = 0;
+
+     /* See if we had a carry/borrow for the low nibble in the last operation */
+     if (cpu->f_h) {
+          /* Yes, we have to adjust it. */
+          adj |= 0x06;
+     }
+
+     /* See if we had a carry/borrow for the high nibble in the last operation */
+     if (cpu->f_c) {
+          // Yes, we have to adjust it.
+          adj |= 0x60;
+     }
+
+     if (cpu->f_n) {
+          /* If the operation was a substraction we're done since we can never
+           * end up in the A-F range by substracting without generating a
+           * (half)carry. */
+          a -= adj;
+     } else {
+          /* Additions are a bit more tricky because we might have to adjust
+           * even if we haven't overflowed (and no carry is present). For
+           * instance: 0x8 + 0x4 -> 0xc. */
+          if ((a & 0xf) > 0x09) {
+               adj |= 0x06;
+          }
+
+          if (a > 0x99) {
+               adj |= 0x60;
+          }
+
+          a += adj;
+        };
+
+     cpu->a = a;
+     cpu->f_z = (a == 0);
+     cpu->f_c = ((adj & 0x60) != 0);
+     cpu->f_h = false;
+}
+
 /*********
  * Loads *
  *********/
@@ -1244,7 +1288,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_inc_h,
      gb_i_dec_h,
      gb_i_ld_h_i8,
-     gb_i_unimplemented,
+     gb_i_daa,
      gb_i_jr_z_si8,
      gb_i_add_hl_hl,
      gb_i_ldi_a_mhl,
