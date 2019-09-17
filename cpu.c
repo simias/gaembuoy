@@ -169,6 +169,13 @@ static void gb_i_stop(struct gb *gb) {
      die();
 }
 
+/* Halt and wait for interrupt */
+static void gb_i_halt(struct gb *gb) {
+     /* XXX TODO */
+     fprintf(stderr, "Implement HALT!\n");
+     die();
+}
+
 /* Set Carry Flag */
 static void gb_i_scf(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
@@ -1453,7 +1460,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_mhl_e,
      gb_i_ld_mhl_h,
      gb_i_ld_mhl_l,
-     gb_i_unimplemented,
+     gb_i_halt,
      gb_i_ld_mhl_a,
      gb_i_ld_a_b,
      gb_i_ld_a_c,
