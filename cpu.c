@@ -856,6 +856,48 @@ static void gb_i_ld_mhl_a(struct gb *gb) {
      gb_memory_writeb(gb, hl, a);
 }
 
+static void gb_i_ld_mhl_b(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t b = gb->cpu.b;
+
+     gb_memory_writeb(gb, hl, b);
+}
+
+static void gb_i_ld_mhl_c(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t c = gb->cpu.c;
+
+     gb_memory_writeb(gb, hl, c);
+}
+
+static void gb_i_ld_mhl_d(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t d = gb->cpu.d;
+
+     gb_memory_writeb(gb, hl, d);
+}
+
+static void gb_i_ld_mhl_e(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t e = gb->cpu.e;
+
+     gb_memory_writeb(gb, hl, e);
+}
+
+static void gb_i_ld_mhl_h(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t h = gb->cpu.h;
+
+     gb_memory_writeb(gb, hl, h);
+}
+
+static void gb_i_ld_mhl_l(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint16_t l = gb->cpu.l;
+
+     gb_memory_writeb(gb, hl, l);
+}
+
 static void gb_i_ldi_mhl_a(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
      uint16_t a = gb->cpu.a;
@@ -1405,12 +1447,12 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_l_mhl,
      gb_i_ld_l_a,
      // 0x70
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_ld_mhl_b,
+     gb_i_ld_mhl_c,
+     gb_i_ld_mhl_d,
+     gb_i_ld_mhl_e,
+     gb_i_ld_mhl_h,
+     gb_i_ld_mhl_l,
      gb_i_unimplemented,
      gb_i_ld_mhl_a,
      gb_i_ld_a_b,
