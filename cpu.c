@@ -742,10 +742,62 @@ static void gb_i_dec_hl(struct gb *gb) {
      gb_cpu_set_hl(gb, hl);
 }
 
+static void gb_i_cp_a_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->a);
+}
+
+static void gb_i_cp_a_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->b);
+}
+
+static void gb_i_cp_a_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->c);
+}
+
+static void gb_i_cp_a_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->d);
+}
+
+static void gb_i_cp_a_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->e);
+}
+
+static void gb_i_cp_a_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->h);
+}
+
+static void gb_i_cp_a_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_sub_set_flags(gb, cpu->a, cpu->l);
+}
+
+static void gb_i_cp_a_mhl(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+     gb_cpu_sub_set_flags(gb, cpu->a, v);
+}
+
 static void gb_i_cp_a_i8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
      uint8_t i8 = gb_cpu_next_i8(gb);
 
-     gb_cpu_sub_set_flags(gb, gb->cpu.a, i8);
+     gb_cpu_sub_set_flags(gb, cpu->a, i8);
 }
 
 static uint8_t gb_cpu_and_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
@@ -1890,14 +1942,14 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_or_a_l,
      gb_i_or_a_mhl,
      gb_i_or_a_a,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_cp_a_b,
+     gb_i_cp_a_c,
+     gb_i_cp_a_d,
+     gb_i_cp_a_e,
+     gb_i_cp_a_h,
+     gb_i_cp_a_l,
+     gb_i_cp_a_mhl,
+     gb_i_cp_a_a,
      // 0xc0
      gb_i_ret_nz,
      gb_i_pop_bc,
