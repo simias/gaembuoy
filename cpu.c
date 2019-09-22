@@ -945,6 +945,22 @@ static void gb_i_or_a_l(struct gb *gb) {
      cpu->a = gb_cpu_or_set_flags(gb, cpu->a, cpu->l);
 }
 
+static void gb_i_or_a_mhl(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+     cpu->a = gb_cpu_or_set_flags(gb, cpu->a, v);
+}
+
+static void gb_i_or_a_i8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint8_t i8 = gb_cpu_next_i8(gb);
+
+     cpu->a = gb_cpu_or_set_flags(gb, cpu->a, i8);
+}
+
 static void gb_i_cpl_a(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
@@ -1872,7 +1888,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_or_a_e,
      gb_i_or_a_h,
      gb_i_or_a_l,
-     gb_i_unimplemented,
+     gb_i_or_a_mhl,
      gb_i_or_a_a,
      gb_i_unimplemented,
      gb_i_unimplemented,
@@ -1940,7 +1956,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_di,
      gb_i_unimplemented,
      gb_i_push_af,
-     gb_i_unimplemented,
+     gb_i_or_a_i8,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
