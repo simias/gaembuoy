@@ -757,10 +757,62 @@ static uint8_t gb_cpu_and_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
      return r;
 }
 
+static void gb_i_and_a_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->a);
+}
+
+static void gb_i_and_a_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->b);
+}
+
+static void gb_i_and_a_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->c);
+}
+
+static void gb_i_and_a_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->d);
+}
+
+static void gb_i_and_a_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->e);
+}
+
+static void gb_i_and_a_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->h);
+}
+
+static void gb_i_and_a_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, cpu->l);
+}
+
+static void gb_i_and_a_mhl(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, v);
+}
+
 static void gb_i_and_a_i8(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
      uint8_t i8 = gb_cpu_next_i8(gb);
 
-     gb->cpu.a = gb_cpu_and_set_flags(gb, gb->cpu.a, i8);
+     cpu->a = gb_cpu_and_set_flags(gb, cpu->a, i8);
 }
 
 static uint8_t gb_cpu_or_set_flags(struct gb *gb, uint8_t a, uint8_t b) {
@@ -1722,14 +1774,14 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_sbc_a_mhl,
      gb_i_sbc_a_a,
      // 0xa0
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_and_a_b,
+     gb_i_and_a_c,
+     gb_i_and_a_d,
+     gb_i_and_a_e,
+     gb_i_and_a_h,
+     gb_i_and_a_l,
+     gb_i_and_a_mhl,
+     gb_i_and_a_a,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
