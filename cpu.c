@@ -1655,6 +1655,42 @@ static void gb_i_jp_i16(struct gb *gb) {
      gb_cpu_load_pc(gb, i16);
 }
 
+static void gb_i_jp_nz_i16(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     if (!cpu->f_z) {
+          gb_cpu_load_pc(gb, i16);
+     }
+}
+
+static void gb_i_jp_z_i16(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     if (cpu->f_z) {
+          gb_cpu_load_pc(gb, i16);
+     }
+}
+
+static void gb_i_jp_nc_i16(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     if (!cpu->f_c) {
+          gb_cpu_load_pc(gb, i16);
+     }
+}
+
+static void gb_i_jp_c_i16(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t i16 = gb_cpu_next_i16(gb);
+
+     if (cpu->f_c) {
+          gb_cpu_load_pc(gb, i16);
+     }
+}
+
 static void gb_i_jr_si8(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      uint8_t i8 = gb_cpu_next_i8(gb);
@@ -1949,7 +1985,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      // 0xc0
      gb_i_ret_nz,
      gb_i_pop_bc,
-     gb_i_unimplemented,
+     gb_i_jp_nz_i16,
      gb_i_jp_i16,
      gb_i_unimplemented,
      gb_i_push_bc,
@@ -1957,7 +1993,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_ret_z,
      gb_i_ret,
-     gb_i_unimplemented,
+     gb_i_jp_z_i16,
      gb_i_op_cb,
      gb_i_unimplemented,
      gb_i_call_i16,
@@ -1966,7 +2002,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      // 0xd0
      gb_i_ret_nc,
      gb_i_pop_de,
-     gb_i_unimplemented,
+     gb_i_jp_nc_i16,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_push_de,
@@ -1974,7 +2010,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_ret_c,
      gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_jp_c_i16,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_unimplemented,
