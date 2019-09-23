@@ -1695,6 +1695,14 @@ static void gb_i_jp_c_i16(struct gb *gb) {
      }
 }
 
+static void gb_i_jp_hl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+
+     /* This doesn't incur any additional delay so we don't call gb_cpu_load_pc
+      */
+     gb->cpu.pc = hl;
+}
+
 static void gb_i_jr_si8(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      uint8_t i8 = gb_cpu_next_i8(gb);
@@ -2030,7 +2038,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_and_a_i8,
      gb_i_unimplemented,
      gb_i_add_sp_si8,
-     gb_i_unimplemented,
+     gb_i_jp_hl,
      gb_i_ld_mi16_a,
      gb_i_unimplemented,
      gb_i_unimplemented,
