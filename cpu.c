@@ -140,17 +140,6 @@ static uint16_t gb_cpu_next_i16(struct gb *gb) {
 
 typedef void (*gb_instruction_f)(struct gb *);
 
-static void gb_i_unimplemented(struct gb *gb) {
-     struct gb_cpu *cpu = &gb->cpu;
-     uint16_t instruction_pc = (cpu->pc - 1) & 0xffff;
-     uint8_t instruction = gb_memory_readb(gb, instruction_pc);
-
-     fprintf(stderr,
-             "Unimplemented instruction 0x%02x at 0x%04x\n",
-             instruction, instruction_pc);
-     die();
-}
-
 /*****************
  * Miscellaneous *
  *****************/
@@ -173,6 +162,10 @@ static void gb_i_undefined(struct gb *gb) {
 
 static void gb_i_di(struct gb *gb) {
      // XXX TODO: disable interrupts
+}
+
+static void gb_i_ei(struct gb *gb) {
+     // XXX TODO: enable interrupts
 }
 
 static void gb_i_stop(struct gb *gb) {
@@ -2175,7 +2168,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ld_hl_sp_si8,
      gb_i_ld_sp_hl,
      gb_i_ld_a_mi16,
-     gb_i_unimplemented,
+     gb_i_ei,
      gb_i_undefined,
      gb_i_undefined,
      gb_i_cp_a_i8,
