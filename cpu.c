@@ -2334,6 +2334,71 @@ static void gb_i_rrc_mhl(struct gb *gb) {
      gb_memory_writeb(gb, hl, v);
 }
 
+static void gb_cpu_rl_set_flags(struct gb *gb, uint8_t *v) {
+     struct gb_cpu *cpu = &gb->cpu;
+     bool new_c = *v >> 7;
+
+     *v = (*v << 1) | (uint8_t)cpu->f_c;
+
+     cpu->f_z = (*v == 0);
+     cpu->f_n = false;
+     cpu->f_h = false;
+     cpu->f_c = new_c;
+}
+
+static void gb_i_rl_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->a);
+}
+
+static void gb_i_rl_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->b);
+}
+
+static void gb_i_rl_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->c);
+}
+
+static void gb_i_rl_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->d);
+}
+
+static void gb_i_rl_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->e);
+}
+
+static void gb_i_rl_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->h);
+}
+
+static void gb_i_rl_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_rl_set_flags(gb, &cpu->l);
+}
+
+static void gb_i_rl_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_rl_set_flags(gb, &v);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
 static void gb_cpu_swap_set_flags(struct gb *gb, uint8_t *v) {
      struct gb_cpu *cpu = &gb->cpu;
 
@@ -2417,14 +2482,14 @@ static gb_instruction_f gb_instructions_cb[0x100] = {
      gb_i_rrc_mhl,
      gb_i_rrc_a,
      // 0x10
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
+     gb_i_rl_b,
+     gb_i_rl_c,
+     gb_i_rl_d,
+     gb_i_rl_e,
+     gb_i_rl_h,
+     gb_i_rl_l,
+     gb_i_rl_mhl,
+     gb_i_rl_a,
      gb_i_unimplemented_cb,
      gb_i_unimplemented_cb,
      gb_i_unimplemented_cb,
