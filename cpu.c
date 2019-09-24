@@ -159,6 +159,18 @@ static void gb_i_nop(struct gb *gb) {
      // NOP
 }
 
+static void gb_i_undefined(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     uint16_t instruction_pc = (cpu->pc - 1) & 0xffff;
+     uint8_t instruction = gb_memory_readb(gb, instruction_pc);
+
+     // Undefined opcode. Apparently freezes the CPU on real hardware
+     fprintf(stderr,
+             "Undefined instruction instruction 0x%02x at 0x%04x\n",
+             instruction, instruction_pc);
+     die();
+}
+
 static void gb_i_di(struct gb *gb) {
      // XXX TODO: disable interrupts
 }
@@ -2085,7 +2097,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ret_nc,
      gb_i_pop_de,
      gb_i_jp_nc_i16,
-     gb_i_unimplemented,
+     gb_i_undefined,
      gb_i_call_nc_i16,
      gb_i_push_de,
      gb_i_sub_a_i8,
@@ -2093,26 +2105,26 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_ret_c,
      gb_i_unimplemented,
      gb_i_jp_c_i16,
-     gb_i_unimplemented,
+     gb_i_undefined,
      gb_i_call_c_i16,
-     gb_i_unimplemented,
+     gb_i_undefined,
      gb_i_sbc_a_i8,
      gb_i_rst_18,
      // 0xe0
      gb_i_ldh_mi8_a,
      gb_i_pop_hl,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_undefined,
+     gb_i_undefined,
      gb_i_push_hl,
      gb_i_and_a_i8,
      gb_i_rst_20,
      gb_i_add_sp_si8,
      gb_i_jp_hl,
      gb_i_ld_mi16_a,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_undefined,
+     gb_i_undefined,
+     gb_i_undefined,
      gb_i_xor_a_i8,
      gb_i_rst_28,
      // 0xf0
@@ -2120,7 +2132,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_pop_af,
      gb_i_unimplemented,
      gb_i_di,
-     gb_i_unimplemented,
+     gb_i_undefined,
      gb_i_push_af,
      gb_i_or_a_i8,
      gb_i_rst_30,
@@ -2128,8 +2140,8 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_ld_a_mi16,
      gb_i_unimplemented,
-     gb_i_unimplemented,
-     gb_i_unimplemented,
+     gb_i_undefined,
+     gb_i_undefined,
      gb_i_cp_a_i8,
      gb_i_rst_38,
 };
