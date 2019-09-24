@@ -638,7 +638,7 @@ static void gb_i_adc_a_i8(struct gb *gb) {
      cpu->a = gb_cpu_adc_set_flags(gb, cpu->a, i8);
 }
 
-static void gb_i_add_sp_si8(struct gb *gb) {
+static uint16_t gb_add_sp_si8(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
      /* Offset is signed */
      int8_t i8 = gb_cpu_next_i8(gb);
@@ -653,7 +653,11 @@ static void gb_i_add_sp_si8(struct gb *gb) {
      cpu->f_h = (cpu->sp ^ i8 ^ r) & 0x10;
      cpu->f_c = (cpu->sp ^ i8 ^ r) & 0x100;
 
-     cpu->sp = r;
+     return (uint16_t)r;
+}
+
+static void gb_i_add_sp_si8(struct gb *gb) {
+     gb->cpu.sp = gb_add_sp_si8(gb);
 }
 
 static void gb_i_add_hl_bc(struct gb *gb) {
@@ -1444,6 +1448,12 @@ static void gb_i_ld_l_mhl(struct gb *gb) {
      gb->cpu.l = v;
 }
 
+static void gb_i_ld_hl_sp_si8(struct gb *gb) {
+     uint16_t hl = gb_add_sp_si8(gb);
+
+     gb_cpu_set_hl(gb, hl);
+}
+
 static void gb_i_push_bc(struct gb *gb) {
      uint16_t bc = gb_cpu_bc(gb);
 
@@ -2160,7 +2170,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_push_af,
      gb_i_or_a_i8,
      gb_i_rst_30,
-     gb_i_unimplemented,
+     gb_i_ld_hl_sp_si8,
      gb_i_unimplemented,
      gb_i_ld_a_mi16,
      gb_i_unimplemented,
