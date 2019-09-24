@@ -1819,6 +1819,44 @@ static void gb_i_ret_nc(struct gb *gb) {
      }
 }
 
+static void gb_cpu_rst(struct gb *gb, uint16_t target) {
+     gb_cpu_pushw(gb, gb->cpu.pc);
+
+     gb_cpu_load_pc(gb, target);
+}
+
+static void gb_i_rst_00(struct gb *gb) {
+     gb_cpu_rst(gb, 0x00);
+}
+
+static void gb_i_rst_08(struct gb *gb) {
+     gb_cpu_rst(gb, 0x08);
+}
+
+static void gb_i_rst_10(struct gb *gb) {
+     gb_cpu_rst(gb, 0x10);
+}
+
+static void gb_i_rst_18(struct gb *gb) {
+     gb_cpu_rst(gb, 0x18);
+}
+
+static void gb_i_rst_20(struct gb *gb) {
+     gb_cpu_rst(gb, 0x20);
+}
+
+static void gb_i_rst_28(struct gb *gb) {
+     gb_cpu_rst(gb, 0x28);
+}
+
+static void gb_i_rst_30(struct gb *gb) {
+     gb_cpu_rst(gb, 0x30);
+}
+
+static void gb_i_rst_38(struct gb *gb) {
+     gb_cpu_rst(gb, 0x38);
+}
+
 static void gb_i_op_cb(struct gb *gb);
 
 static gb_instruction_f gb_instructions[0x100] = {
@@ -2034,7 +2072,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_call_nz_i16,
      gb_i_push_bc,
      gb_i_add_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_00,
      gb_i_ret_z,
      gb_i_ret,
      gb_i_jp_z_i16,
@@ -2042,7 +2080,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_call_z_i16,
      gb_i_call_i16,
      gb_i_adc_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_08,
      // 0xd0
      gb_i_ret_nc,
      gb_i_pop_de,
@@ -2051,7 +2089,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_call_nc_i16,
      gb_i_push_de,
      gb_i_sub_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_10,
      gb_i_ret_c,
      gb_i_unimplemented,
      gb_i_jp_c_i16,
@@ -2059,7 +2097,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_call_c_i16,
      gb_i_unimplemented,
      gb_i_sbc_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_18,
      // 0xe0
      gb_i_ldh_mi8_a,
      gb_i_pop_hl,
@@ -2068,7 +2106,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_push_hl,
      gb_i_and_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_20,
      gb_i_add_sp_si8,
      gb_i_jp_hl,
      gb_i_ld_mi16_a,
@@ -2076,7 +2114,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_xor_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_28,
      // 0xf0
      gb_i_ldh_a_mi8,
      gb_i_pop_af,
@@ -2085,7 +2123,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_push_af,
      gb_i_or_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_30,
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_ld_a_mi16,
@@ -2093,7 +2131,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_unimplemented,
      gb_i_unimplemented,
      gb_i_cp_a_i8,
-     gb_i_unimplemented,
+     gb_i_rst_38,
 };
 
 void gb_cpu_run_instruction(struct gb *gb) {
