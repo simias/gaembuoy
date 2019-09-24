@@ -1835,6 +1835,12 @@ static void gb_i_ret_nc(struct gb *gb) {
      }
 }
 
+static void gb_i_reti(struct gb *gb) {
+     gb_i_ret(gb);
+
+     // XXX: re-enable interrupts
+}
+
 static void gb_cpu_rst(struct gb *gb, uint16_t target) {
      gb_cpu_pushw(gb, gb->cpu.pc);
 
@@ -2107,7 +2113,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_sub_a_i8,
      gb_i_rst_10,
      gb_i_ret_c,
-     gb_i_unimplemented,
+     gb_i_reti,
      gb_i_jp_c_i16,
      gb_i_undefined,
      gb_i_call_c_i16,
