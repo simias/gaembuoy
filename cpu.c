@@ -342,6 +342,8 @@ static uint16_t gb_cpu_addw_set_flags(struct gb *gb, uint16_t a, uint16_t b) {
      cpu->f_h = (wa ^ wb ^ r) & 0x1000;
      /* cpu->f_z is not altered */
 
+     gb_cpu_clock_tick(gb, 4);
+
      return r;
 }
 
@@ -669,6 +671,8 @@ static uint16_t gb_add_sp_si8(struct gb *gb) {
 
 static void gb_i_add_sp_si8(struct gb *gb) {
      gb->cpu.sp = gb_add_sp_si8(gb);
+
+     gb_cpu_clock_tick(gb, 8);
 }
 
 static void gb_i_add_hl_bc(struct gb *gb) {
@@ -711,6 +715,8 @@ static void gb_i_inc_sp(struct gb *gb) {
      sp = (sp + 1) & 0xffff;
 
      gb->cpu.sp = sp;
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_inc_bc(struct gb *gb) {
@@ -719,6 +725,8 @@ static void gb_i_inc_bc(struct gb *gb) {
      bc = (bc + 1) & 0xffff;
 
      gb_cpu_set_bc(gb, bc);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_inc_de(struct gb *gb) {
@@ -727,6 +735,8 @@ static void gb_i_inc_de(struct gb *gb) {
      de = (de + 1) & 0xffff;
 
      gb_cpu_set_de(gb, de);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_inc_hl(struct gb *gb) {
@@ -735,6 +745,8 @@ static void gb_i_inc_hl(struct gb *gb) {
      hl = (hl + 1) & 0xffff;
 
      gb_cpu_set_hl(gb, hl);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_dec_sp(struct gb *gb) {
@@ -743,6 +755,8 @@ static void gb_i_dec_sp(struct gb *gb) {
      sp = (sp - 1) & 0xffff;
 
      gb->cpu.sp = sp;
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_dec_bc(struct gb *gb) {
@@ -751,6 +765,8 @@ static void gb_i_dec_bc(struct gb *gb) {
      bc = (bc - 1) & 0xffff;
 
      gb_cpu_set_bc(gb, bc);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_dec_de(struct gb *gb) {
@@ -759,6 +775,8 @@ static void gb_i_dec_de(struct gb *gb) {
      de = (de - 1) & 0xffff;
 
      gb_cpu_set_de(gb, de);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_dec_hl(struct gb *gb) {
@@ -767,6 +785,8 @@ static void gb_i_dec_hl(struct gb *gb) {
      hl = (hl - 1) & 0xffff;
 
      gb_cpu_set_hl(gb, hl);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_cp_a_a(struct gb *gb) {
@@ -1293,6 +1313,8 @@ static void gb_i_ld_sp_hl(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
 
      gb->cpu.sp = hl;
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_ld_hl_i16(struct gb *gb) {
@@ -1469,24 +1491,32 @@ static void gb_i_ld_hl_sp_si8(struct gb *gb) {
      uint16_t hl = gb_add_sp_si8(gb);
 
      gb_cpu_set_hl(gb, hl);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_push_bc(struct gb *gb) {
      uint16_t bc = gb_cpu_bc(gb);
 
      gb_cpu_pushw(gb, bc);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_push_de(struct gb *gb) {
      uint16_t de = gb_cpu_de(gb);
 
      gb_cpu_pushw(gb, de);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_push_hl(struct gb *gb) {
      uint16_t hl = gb_cpu_hl(gb);
 
      gb_cpu_pushw(gb, hl);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_push_af(struct gb *gb) {
@@ -1500,6 +1530,8 @@ static void gb_i_push_af(struct gb *gb) {
 
      gb_cpu_pushb(gb, cpu->a);
      gb_cpu_pushb(gb, f);
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_pop_bc(struct gb *gb) {
