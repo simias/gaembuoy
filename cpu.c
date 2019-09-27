@@ -3138,6 +3138,434 @@ static void gb_i_bit_7_mhl(struct gb *gb) {
      gb_cpu_bit_set_flags(gb, &v, 7);
 }
 
+static void gb_cpu_res(struct gb *gb, uint8_t *v, unsigned bit) {
+     *v = *v & ~(1U << bit);
+}
+
+static void gb_i_res_0_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 0);
+}
+
+static void gb_i_res_0_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 0);
+}
+
+static void gb_i_res_0_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 0);
+}
+
+static void gb_i_res_0_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 0);
+}
+
+static void gb_i_res_0_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 0);
+}
+
+static void gb_i_res_0_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 0);
+}
+
+static void gb_i_res_0_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 0);
+}
+
+static void gb_i_res_0_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 0);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_1_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 1);
+}
+
+static void gb_i_res_1_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 1);
+}
+
+static void gb_i_res_1_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 1);
+}
+
+static void gb_i_res_1_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 1);
+}
+
+static void gb_i_res_1_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 1);
+}
+
+static void gb_i_res_1_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 1);
+}
+
+static void gb_i_res_1_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 1);
+}
+
+static void gb_i_res_1_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 1);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_2_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 2);
+}
+
+static void gb_i_res_2_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 2);
+}
+
+static void gb_i_res_2_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 2);
+}
+
+static void gb_i_res_2_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 2);
+}
+
+static void gb_i_res_2_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 2);
+}
+
+static void gb_i_res_2_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 2);
+}
+
+static void gb_i_res_2_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 2);
+}
+
+static void gb_i_res_2_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 2);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_3_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 3);
+}
+
+static void gb_i_res_3_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 3);
+}
+
+static void gb_i_res_3_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 3);
+}
+
+static void gb_i_res_3_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 3);
+}
+
+static void gb_i_res_3_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 3);
+}
+
+static void gb_i_res_3_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 3);
+}
+
+static void gb_i_res_3_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 3);
+}
+
+static void gb_i_res_3_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 3);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_4_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 4);
+}
+
+static void gb_i_res_4_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 4);
+}
+
+static void gb_i_res_4_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 4);
+}
+
+static void gb_i_res_4_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 4);
+}
+
+static void gb_i_res_4_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 4);
+}
+
+static void gb_i_res_4_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 4);
+}
+
+static void gb_i_res_4_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 4);
+}
+
+static void gb_i_res_4_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 4);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_5_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 5);
+}
+
+static void gb_i_res_5_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 5);
+}
+
+static void gb_i_res_5_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 5);
+}
+
+static void gb_i_res_5_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 5);
+}
+
+static void gb_i_res_5_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 5);
+}
+
+static void gb_i_res_5_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 5);
+}
+
+static void gb_i_res_5_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 5);
+}
+
+static void gb_i_res_5_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 5);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_6_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 6);
+}
+
+static void gb_i_res_6_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 6);
+}
+
+static void gb_i_res_6_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 6);
+}
+
+static void gb_i_res_6_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 6);
+}
+
+static void gb_i_res_6_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 6);
+}
+
+static void gb_i_res_6_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 6);
+}
+
+static void gb_i_res_6_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 6);
+}
+
+static void gb_i_res_6_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 6);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
+static void gb_i_res_7_a(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->a, 7);
+}
+
+static void gb_i_res_7_b(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->b, 7);
+}
+
+static void gb_i_res_7_c(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->c, 7);
+}
+
+static void gb_i_res_7_d(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->d, 7);
+}
+
+static void gb_i_res_7_e(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->e, 7);
+}
+
+static void gb_i_res_7_h(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->h, 7);
+}
+
+static void gb_i_res_7_l(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+
+     gb_cpu_res(gb, &cpu->l, 7);
+}
+
+static void gb_i_res_7_mhl(struct gb *gb) {
+     uint16_t hl = gb_cpu_hl(gb);
+     uint8_t v;
+
+     v = gb_memory_readb(gb, hl);
+
+     gb_cpu_res(gb, &v, 7);
+
+     gb_memory_writeb(gb, hl, v);
+}
+
 static gb_instruction_f gb_instructions_cb[0x100] = {
      // 0x00
      gb_i_rlc_b,
@@ -3276,73 +3704,73 @@ static gb_instruction_f gb_instructions_cb[0x100] = {
      gb_i_bit_7_mhl,
      gb_i_bit_7_a,
      // 0x80
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
+     gb_i_res_0_b,
+     gb_i_res_0_c,
+     gb_i_res_0_d,
+     gb_i_res_0_e,
+     gb_i_res_0_h,
+     gb_i_res_0_l,
+     gb_i_res_0_mhl,
+     gb_i_res_0_a,
+     gb_i_res_1_b,
+     gb_i_res_1_c,
+     gb_i_res_1_d,
+     gb_i_res_1_e,
+     gb_i_res_1_h,
+     gb_i_res_1_l,
+     gb_i_res_1_mhl,
+     gb_i_res_1_a,
      // 0x90
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
+     gb_i_res_2_b,
+     gb_i_res_2_c,
+     gb_i_res_2_d,
+     gb_i_res_2_e,
+     gb_i_res_2_h,
+     gb_i_res_2_l,
+     gb_i_res_2_mhl,
+     gb_i_res_2_a,
+     gb_i_res_3_b,
+     gb_i_res_3_c,
+     gb_i_res_3_d,
+     gb_i_res_3_e,
+     gb_i_res_3_h,
+     gb_i_res_3_l,
+     gb_i_res_3_mhl,
+     gb_i_res_3_a,
      // 0xa0
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
+     gb_i_res_4_b,
+     gb_i_res_4_c,
+     gb_i_res_4_d,
+     gb_i_res_4_e,
+     gb_i_res_4_h,
+     gb_i_res_4_l,
+     gb_i_res_4_mhl,
+     gb_i_res_4_a,
+     gb_i_res_5_b,
+     gb_i_res_5_c,
+     gb_i_res_5_d,
+     gb_i_res_5_e,
+     gb_i_res_5_h,
+     gb_i_res_5_l,
+     gb_i_res_5_mhl,
+     gb_i_res_5_a,
      // 0xb0
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
-     gb_i_unimplemented_cb,
+     gb_i_res_6_b,
+     gb_i_res_6_c,
+     gb_i_res_6_d,
+     gb_i_res_6_e,
+     gb_i_res_6_h,
+     gb_i_res_6_l,
+     gb_i_res_6_mhl,
+     gb_i_res_6_a,
+     gb_i_res_7_b,
+     gb_i_res_7_c,
+     gb_i_res_7_d,
+     gb_i_res_7_e,
+     gb_i_res_7_h,
+     gb_i_res_7_l,
+     gb_i_res_7_mhl,
+     gb_i_res_7_a,
      // 0xc0
      gb_i_unimplemented_cb,
      gb_i_unimplemented_cb,
