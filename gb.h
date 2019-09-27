@@ -13,6 +13,10 @@ struct gb;
 #include "gpu.h"
 
 struct gb {
+     /* Counter keeping track of how many CPU cycles have elapsed since an
+      * arbitrary point in time. Used to synchronize the other devices. */
+     int32_t timestamp;
+
      struct gb_cpu cpu;
      struct gb_cart cart;
      struct gb_gpu gpu;

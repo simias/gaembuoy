@@ -18,6 +18,8 @@ int main(int argc, char **argv) {
      gb_cart_load(&gb, rom_file);
      gb_cpu_reset(&gb);
 
+     gb.timestamp = 0;
+
      while (1) {
           gb_cpu_run_instruction(&gb);
      }
