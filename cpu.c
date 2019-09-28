@@ -103,6 +103,8 @@ static void gb_cpu_dump(struct gb *gb) {
 
 static void gb_cpu_load_pc(struct gb *gb, uint16_t new_pc) {
      gb->cpu.pc = new_pc;
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_cpu_pushb(struct gb *gb, uint8_t b) {
@@ -1884,24 +1886,32 @@ static void gb_i_ret_z(struct gb *gb) {
      if (gb->cpu.f_z) {
           gb_i_ret(gb);
      }
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_ret_c(struct gb *gb) {
      if (gb->cpu.f_c) {
           gb_i_ret(gb);
      }
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_ret_nz(struct gb *gb) {
      if (!gb->cpu.f_z) {
           gb_i_ret(gb);
      }
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_ret_nc(struct gb *gb) {
      if (!gb->cpu.f_c) {
           gb_i_ret(gb);
      }
+
+     gb_cpu_clock_tick(gb, 4);
 }
 
 static void gb_i_reti(struct gb *gb) {
