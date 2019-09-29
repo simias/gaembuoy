@@ -16,9 +16,9 @@ int main(int argc, char **argv) {
      rom_file = argv[1];
 
      gb_cart_load(&gb, rom_file);
+     gb_sync_reset(&gb);
      gb_cpu_reset(&gb);
-
-     gb.timestamp = 0;
+     gb_gpu_reset(&gb);
 
      while (1) {
           gb_cpu_run_instruction(&gb);
