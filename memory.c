@@ -146,26 +146,31 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr == REG_SCY) {
+          gb_gpu_sync(gb);
           gb->gpu.scy = val;
           return;
      }
 
      if (addr == REG_SCX) {
+          gb_gpu_sync(gb);
           gb->gpu.scx = val;
           return;
      }
 
      if (addr == REG_BGP) {
+          gb_gpu_sync(gb);
           gb->gpu.bgp = val;
           return;
      }
 
      if (addr == REG_OBP0) {
+          gb_gpu_sync(gb);
           gb->gpu.obp0 = val;
           return;
      }
 
      if (addr == REG_OBP1) {
+          gb_gpu_sync(gb);
           gb->gpu.obp1 = val;
           return;
      }

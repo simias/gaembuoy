@@ -24,8 +24,12 @@ struct gb_gpu {
      uint8_t obp0;
      /* Sprite palette 1 */
      uint8_t obp1;
+     /* Current position within the current line */
+     uint16_t line_pos;
 };
 
+void gb_gpu_reset(struct gb *gb);
+void gb_gpu_sync(struct gb *gb);
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat);
 void gb_gpu_set_lcdc(struct gb *gb, uint8_t stat);
 uint8_t gb_gpu_get_lcdc(struct gb *gb);

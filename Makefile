@@ -2,7 +2,7 @@ NAME = gaembuoy
 
 CFLAGS = -Wall -O2 -MMD -MP
 
-SRC = main.c cpu.c memory.c cart.c gpu.c
+SRC = main.c cpu.c memory.c cart.c gpu.c sync.c
 
 OBJ = $(SRC:%.c=%.o)
 DEP = $(SRC:%.c=%.d)
