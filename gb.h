@@ -7,6 +7,7 @@
 
 struct gb;
 
+#include "sync.h"
 #include "cpu.h"
 #include "memory.h"
 #include "cart.h"
@@ -17,6 +18,7 @@ struct gb {
       * arbitrary point in time. Used to synchronize the other devices. */
      int32_t timestamp;
 
+     struct gb_sync sync;
      struct gb_cpu cpu;
      struct gb_cart cart;
      struct gb_gpu gpu;
