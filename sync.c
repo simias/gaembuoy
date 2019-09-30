@@ -7,9 +7,11 @@ void gb_sync_reset(struct gb *gb) {
 
      for (i = 0; i < GB_SYNC_NUM; i++) {
           sync->last_sync[i] = 0;
+          sync->next_event[i] = 0;
      }
 
      gb->timestamp = 0;
+     sync->first_event = 0;
 }
 
 int32_t gb_sync_resync(struct gb *gb, enum gb_sync_token token) {
@@ -24,4 +26,30 @@ int32_t gb_sync_resync(struct gb *gb, enum gb_sync_token token) {
      sync->last_sync[token] = gb->timestamp;
 
      return elapsed;
+}
+
+void gb_sync_next(struct gb *gb, enum gb_sync_token token, int32_t cycles) {
+     struct gb_sync *sync = &gb->sync;
+     unsigned i;
+
+     sync->next_event[token] = gb->timestamp + cycles;
+
+     /* Recompute the date of the first event to come */
+     sync->first_event = sync->next_event[0];
+
+     for (i = 1; i < GB_SYNC_NUM; i++) {
+          int32_t e = sync->next_event[i];
+          if (e < sync->first_event) {
+               sync->first_event = e;
+          }
+     }
+}
+
+void gb_sync_check_events(struct gb *gb) {
+     struct gb_sync *sync = &gb->sync;
+     int32_t ts = gb->timestamp;
+
+     if (ts >= sync->next_event[GB_SYNC_GPU]) {
+          gb_gpu_sync(gb);
+     }
 }
