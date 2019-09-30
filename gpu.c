@@ -7,6 +7,9 @@
  *      | Mode 2: 80 cycles | Mode 3: 172 cycles | Mode 0: 204 cycles |
  *   Total: 456 cycles
  *
+ * - We draw each line at the boundary between Mode 3 and Mode 0 (not very
+ *   accurate, but simple and works well enough)
+ *
  * - One frame:
  *      | Active video (Modes 2/3/0): 144 lines |
  *      | VSYNC (Mode 1): 10 lines              |
@@ -69,6 +72,12 @@ static uint8_t gb_gpu_get_mode(struct gb *gb) {
      return 0;
 }
 
+static void gb_gpu_draw_cur_line(struct gb *gb) {
+     struct gb_gpu *gpu = &gb->gpu;
+
+     printf("GPU DRAW LINE %d %d\n", gpu->ly, gb->timestamp);
+}
+
 void gb_gpu_sync(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
      int32_t elapsed = gb_sync_resync(gb, GB_SYNC_GPU);
@@ -76,14 +85,29 @@ void gb_gpu_sync(struct gb *gb) {
      uint16_t line_remaining = HTOTAL - gpu->line_pos;
 
      while (elapsed > 0) {
+          uint8_t prev_mode = gb_gpu_get_mode(gb);
+
           if (elapsed < line_remaining) {
                /* Current line not finished */
                gpu->line_pos += elapsed;
                line_remaining -= elapsed;
                elapsed = 0;
+
+               if (prev_mode != 0 && gb_gpu_get_mode(gb) == 0) {
+                    /* We didn't finish the line but we did cross the Mode 3 ->
+                     * Mode 0 boundary, draw the current line */
+                    gb_gpu_draw_cur_line(gb);
+               }
           } else {
                /* We reached the end of this line */
                elapsed -= line_remaining;
+
+               if (prev_mode == 2 || prev_mode == 3) {
+                    /* We're about to finish the current line but we hadn't
+                     * reached the Mode 0 boundary yet, which means that we
+                     * still have to draw it */
+                    gb_gpu_draw_cur_line(gb);
+               }
 
                /* Move on to the next line */
                gpu->ly++;
