@@ -25,6 +25,11 @@ void gb_cpu_reset(struct gb *gb) {
 
 static inline void gb_cpu_clock_tick(struct gb *gb, int32_t cycles) {
      gb->timestamp += cycles;
+
+     if (gb->timestamp >= gb->sync.first_event) {
+          /* We have a device sync pending */
+          gb_sync_check_events(gb);
+     }
 }
 
 static uint8_t gb_cpu_readb(struct gb *gb, uint16_t addr) {

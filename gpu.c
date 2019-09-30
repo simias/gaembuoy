@@ -96,6 +96,9 @@ void gb_gpu_sync(struct gb *gb) {
                }
           }
      }
+
+     /* Force a sync at the beginning of the next line */
+     gb_sync_next(gb, GB_SYNC_GPU, line_remaining);
 }
 
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat) {
