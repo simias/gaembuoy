@@ -53,3 +53,19 @@ void gb_sync_check_events(struct gb *gb) {
           gb_gpu_sync(gb);
      }
 }
+
+/* Subtract the current value of the timestamp from all last_sync and next_event
+ * dates, therefore avoiding potential overflows while keeping everything in
+ * sync */
+void gb_sync_rebase(struct gb *gb) {
+     struct gb_sync *sync = &gb->sync;
+     unsigned i;
+
+     for (i = 0; i < GB_SYNC_NUM; i++) {
+          sync->last_sync[i] -= gb->timestamp;
+          sync->next_event[i] -= gb->timestamp;
+     }
+
+     sync->first_event -= gb->timestamp;
+     gb->timestamp = 0;
+}
