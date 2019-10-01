@@ -118,6 +118,13 @@ static enum gb_color gb_gpu_get_tile_color(struct gb *gb,
      return (msb << 1) | lsb;
 }
 
+static enum gb_color gb_gpu_palette_transform(enum gb_color color,
+                                              uint8_t palette) {
+     unsigned off = 2 * color;
+
+     return (palette >> off) & 3;
+}
+
 static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
                                                    uint8_t x, uint8_t y,
                                                    bool use_high_tm) {
@@ -152,6 +159,8 @@ static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
      pix.color = gb_gpu_get_tile_color(gb, tile_index, tile_x, tile_y,
                                        gpu->bg_window_use_sprite_ts);
      pix.opaque = pix.color != GB_COL_WHITE;
+
+     pix.color = gb_gpu_palette_transform(pix.color, gpu->bgp);
 
      return pix;
 }
