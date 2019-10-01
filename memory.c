@@ -116,6 +116,7 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
+          gb_gpu_sync(gb);
           gb->vram[addr - VRAM_BASE] = val;
           return;
      }
