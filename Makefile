@@ -1,8 +1,9 @@
 NAME = gaembuoy
 
-CFLAGS = -Wall -O2 -MMD -MP
+CFLAGS = -Wall -O2 -MMD -MP `pkg-config --cflags sdl2`
+LDFLAGS = `pkg-config --libs sdl2`
 
-SRC = main.c cpu.c memory.c cart.c gpu.c sync.c
+SRC = main.c cpu.c memory.c cart.c gpu.c sync.c sdl.c
 
 OBJ = $(SRC:%.c=%.o)
 DEP = $(SRC:%.c=%.d)
