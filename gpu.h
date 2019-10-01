@@ -14,8 +14,22 @@ struct gb_gpu {
      bool iten_mode1;
      /* Mode 2 interrupt enable */
      bool iten_mode2;
-     /* LCD Control register */
-     uint8_t lcdc;
+     /* True if the GPU is enabled */
+     bool master_enable;
+     /* True if the background is enabled */
+     bool bg_enable;
+     /* True if the window is enabled */
+     bool window_enable;
+     /* True if the sprites are enabled */
+     bool sprite_enable;
+     /* If true sprites are 8x16, otherwise 8x8 */
+     bool tall_sprites;
+     /* If true the background uses the "high" tile map */
+     bool bg_use_high_tm;
+     /* If true the window uses the "high" tile map */
+     bool window_use_high_tm;
+     /* If true the background and window use the sprite tile set */
+     bool bg_window_use_sprite_ts;
      /* LY register */
      uint8_t ly;
      /* Background palette */

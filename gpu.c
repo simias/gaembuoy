@@ -42,7 +42,14 @@ void gb_gpu_reset(struct gb *gb) {
      gpu->iten_mode0 = false;
      gpu->iten_mode1 = false;
      gpu->iten_mode2 = false;
-     gpu->lcdc = 0;
+     gpu->master_enable = true;
+     gpu->bg_enable = false;
+     gpu->window_enable = false;
+     gpu->sprite_enable = false;
+     gpu->tall_sprites = false;
+     gpu->bg_use_high_tm = false;
+     gpu->window_use_high_tm = false;
+     gpu->bg_window_use_sprite_ts = false;
      gpu->ly = 0;
      gpu->bgp = 0;
      gpu->obp0 = 0;
@@ -170,6 +177,10 @@ uint8_t gb_gpu_get_lcd_stat(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
      uint8_t r = 0;
 
+     if (!gpu->master_enable) {
+          return 0;
+     }
+
      gb_gpu_sync(gb);
 
      r |= gb_gpu_get_mode(gb);
@@ -183,23 +194,58 @@ uint8_t gb_gpu_get_lcd_stat(struct gb *gb) {
      return r;
 }
 
-void gb_gpu_set_lcdc(struct gb *gb, uint8_t ctrl) {
+void gb_gpu_set_lcdc(struct gb *gb, uint8_t lcdc) {
+     struct gb_gpu *gpu = &gb->gpu;
+     bool master_enable;
 
      gb_gpu_sync(gb);
 
-     gb->gpu.lcdc = ctrl;
-     fprintf(stderr, "GPU LCDC: 0x%02x\n", ctrl);
+     gpu->bg_enable = lcdc & 0x01;
+     gpu->sprite_enable = lcdc & 0x02;
+     gpu->tall_sprites = lcdc & 0x04;
+     gpu->bg_use_high_tm = lcdc & 0x08;
+     gpu->bg_window_use_sprite_ts = lcdc & 0x10;
+     gpu->window_enable = lcdc & 0x20;
+     gpu->window_use_high_tm = lcdc & 0x40;
+     master_enable = lcdc & 0x80;
+
+     if (master_enable != gpu->master_enable) {
+          gpu->master_enable = master_enable;
+
+          if (master_enable) {
+               /* GPU was just re-enabled, restart from the beginning of the
+                * first line */
+               gpu->ly = 0;
+               gpu->line_pos = 0;
+               gb_gpu_sync(gb);
+          }
+     }
 }
 
 uint8_t gb_gpu_get_lcdc(struct gb *gb) {
+     struct gb_gpu *gpu = &gb->gpu;
+     uint8_t lcdc = 0;
 
      gb_gpu_sync(gb);
 
-     return gb->gpu.lcdc;
+     lcdc |= (gpu->bg_enable << 0);
+     lcdc |= (gpu->sprite_enable << 1);
+     lcdc |= (gpu->tall_sprites << 2);
+     lcdc |= (gpu->bg_use_high_tm << 3);
+     lcdc |= (gpu->bg_window_use_sprite_ts << 4);
+     lcdc |= (gpu->window_enable << 5);
+     lcdc |= (gpu->window_use_high_tm << 6);
+     lcdc |= (gpu->master_enable << 7);
+
+     return lcdc;
 }
 
 uint8_t gb_gpu_get_ly(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
+
+     if (!gpu->master_enable) {
+          return 0;
+     }
 
      gb_gpu_sync(gb);
 
