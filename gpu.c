@@ -79,25 +79,110 @@ static uint8_t gb_gpu_get_mode(struct gb *gb) {
      return 0;
 }
 
+struct gb_gpu_pixel {
+     enum gb_color color;
+     bool opaque;
+};
+
+static enum gb_color gb_gpu_get_tile_color(struct gb *gb,
+                                           uint8_t tile_index,
+                                           uint8_t x, uint8_t y,
+                                           bool use_sprite_ts) {
+     unsigned tile_addr;
+     /* Each tile is 8x8 pixels and stores 2bits per pixels for a total of
+      * 16bytes per tile */
+     const unsigned tile_size = 16;
+     unsigned lsb;
+     unsigned msb;
+
+     if (use_sprite_ts) {
+          /* Sprite tile set starts at the beginning of VRAM */
+          tile_addr = tile_index * tile_size;
+     } else {
+          /* The other tile set (which can optionally be used by the background
+           * and window) starts just after the sprite tile set but there's a
+           * trick: the tile index is used as a *signed* value, which means that
+           * values above 127 index *back* into the second half of the sprite
+           * tile set, effectively sharing the region between the two sets */
+          tile_addr = 0x1000 + (int8_t)tile_index * tile_size;
+     }
+
+     /* Pixel data is stored "backwards" in VRAM: the leftmost pixel (x = 0) is
+      * stored in the MSB (byte >> 7) */
+     x = 7 - x;
+
+     /* The pixel value is two bits split across two contiguous bytes */
+     lsb = (gb->vram[tile_addr + y * 2 + 0] >> x) & 1;
+     msb = (gb->vram[tile_addr + y * 2 + 1] >> x) & 1;
+
+     return (msb << 1) | lsb;
+}
+
+static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
+                                                   uint8_t x, uint8_t y,
+                                                   bool use_high_tm) {
+     struct gb_gpu *gpu = &gb->gpu;
+
+     /* Coordinates of the tile in the tile map (each tile is 8x8 pixels) */
+     unsigned tile_map_x = x / 8;
+     unsigned tile_map_y = y / 8;
+     /* Coordinates of the pixel within the tile */
+     unsigned tile_x = x % 8;
+     unsigned tile_y = y % 8;
+     /* Offset of the tile map entry in the VRAM */
+     unsigned tm_addr;
+     /* Index of the tile entry in the tile set */
+     uint8_t tile_index;
+     struct gb_gpu_pixel pix;
+
+     /* There are two independent tile maps the game can use */
+     if (use_high_tm) {
+          tm_addr = 0x1c00;
+     } else {
+          tm_addr = 0x1800;
+     }
+
+     /* The tile map is a square map of 32*32 tiles. For each tile it contains
+      * one byte (8bits) which is an index in the tile set. */
+     tm_addr += tile_map_y * 32 + tile_map_x;
+
+     /* Look up the tile map entry in VRAM */
+     tile_index = gb->vram[tm_addr];
+
+     pix.color = gb_gpu_get_tile_color(gb, tile_index, tile_x, tile_y,
+                                       gpu->bg_window_use_sprite_ts);
+     pix.opaque = pix.color != GB_COL_WHITE;
+
+     return pix;
+}
+
+static struct gb_gpu_pixel gb_gpu_get_bg_pixel(struct gb *gb,
+                                               unsigned x, unsigned y) {
+     struct gb_gpu *gpu = &gb->gpu;
+     uint8_t bgx = (x + gpu->scx) & 0xff;
+     uint8_t bgy = (y + gpu->scy) & 0xff;
+
+     return gb_gpu_get_bg_win_pixel(gb, bgx, bgy, gpu->bg_use_high_tm);
+}
+
 static void gb_gpu_draw_cur_line(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
      enum gb_color line[GB_LCD_WIDTH];
-     enum gb_color col;
-     unsigned i;
+     unsigned x;
 
-     /* XXX: frontend test pattern */
-     if (gpu->ly < 36) {
-          col = GB_COL_WHITE;
-     } else if (gpu->ly < 72) {
-          col = GB_COL_LIGHTGREY;
-     } else if (gpu->ly < 108) {
-          col = GB_COL_DARKGREY;
-     } else {
-          col = GB_COL_BLACK;
-     }
+     for (x = 0; x < GB_LCD_WIDTH; x++) {
+          struct gb_gpu_pixel p = {
+               .color = GB_COL_WHITE,
+               .opaque = false
+          };
 
-     for (i = 0; i < GB_LCD_WIDTH; i++) {
-          line[i] = col;
+          if (gpu->master_enable) {
+               if (gpu->bg_enable) {
+                    p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
+               }
+          }
+
+          line[x] = p.color;
      }
 
      gb->frontend.draw_line(gb, gpu->ly, line);
