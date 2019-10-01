@@ -23,5 +23,6 @@ void gb_sync_reset(struct gb *gb);
 int32_t gb_sync_resync(struct gb *gb, enum gb_sync_token token);
 void gb_sync_next(struct gb *gb, enum gb_sync_token token, int32_t cycles);
 void gb_sync_check_events(struct gb *gb);
+void gb_sync_rebase(struct gb *gb);
 
 #endif /* _GB_SYNC_H_ */

@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
 
           gb.frontend.flip(&gb);
           gb.frontend.refresh_input(&gb);
+          gb_sync_rebase(&gb);
      }
 
      gb.frontend.destroy(&gb);
