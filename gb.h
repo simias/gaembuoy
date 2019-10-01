@@ -7,6 +7,7 @@
 
 struct gb;
 
+#include "frontend.h"
 #include "sync.h"
 #include "cpu.h"
 #include "memory.h"
@@ -17,7 +18,12 @@ struct gb {
      /* Counter keeping track of how many CPU cycles have elapsed since an
       * arbitrary point in time. Used to synchronize the other devices. */
      int32_t timestamp;
+     /* Set by the GPU when a frame has been drawn */
+     bool frame_done;
+     /* Set by the frontend when the user requested that the emulation stops */
+     bool quit;
 
+     struct gb_frontend frontend;
      struct gb_sync sync;
      struct gb_cpu cpu;
      struct gb_cart cart;

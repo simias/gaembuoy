@@ -2240,7 +2240,7 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_rst_38,
 };
 
-void gb_cpu_run_instruction(struct gb *gb) {
+static void gb_cpu_run_instruction(struct gb *gb) {
      uint8_t instruction;
 
      gb_cpu_dump(gb);
@@ -2248,6 +2248,14 @@ void gb_cpu_run_instruction(struct gb *gb) {
      instruction = gb_cpu_next_i8(gb);
 
      gb_instructions[instruction](gb);
+}
+
+void gb_cpu_run_frame(struct gb *gb) {
+     gb->frame_done = false;
+
+     while (!gb->frame_done) {
+          gb_cpu_run_instruction(gb);
+     }
 }
 
 /*

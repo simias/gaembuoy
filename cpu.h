@@ -32,6 +32,6 @@ struct gb_cpu {
 };
 
 void gb_cpu_reset(struct gb *gb);
-void gb_cpu_run_instruction(struct gb *gb);
+void gb_cpu_run_frame(struct gb *gb);
 
 #endif /* _GB_CPU_H_ */
