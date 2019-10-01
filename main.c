@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "gb.h"
+#include "sdl.h"
 
 int main(int argc, char **argv) {
      struct gb gb;
@@ -13,6 +14,8 @@ int main(int argc, char **argv) {
           return EXIT_FAILURE;
      }
 
+     gb_sdl_frontend_init(&gb);
+
      rom_file = argv[1];
 
      gb_cart_load(&gb, rom_file);
@@ -20,10 +23,17 @@ int main(int argc, char **argv) {
      gb_cpu_reset(&gb);
      gb_gpu_reset(&gb);
 
-     while (1) {
-          gb_cpu_run_instruction(&gb);
+     gb.quit = false;
+     while (!gb.quit) {
+          /* Run emulator core until a frame is rendered */
+          gb_cpu_run_frame(&gb);
+
+          gb.frontend.flip(&gb);
+          gb.frontend.refresh_input(&gb);
      }
 
+     gb.frontend.destroy(&gb);
      gb_cart_unload(&gb);
+
      return 0;
 }

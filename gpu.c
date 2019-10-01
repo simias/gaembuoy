@@ -74,8 +74,26 @@ static uint8_t gb_gpu_get_mode(struct gb *gb) {
 
 static void gb_gpu_draw_cur_line(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
+     enum gb_color line[GB_LCD_WIDTH];
+     enum gb_color col;
+     unsigned i;
 
-     printf("GPU DRAW LINE %d %d\n", gpu->ly, gb->timestamp);
+     /* XXX: frontend test pattern */
+     if (gpu->ly < 36) {
+          col = GB_COL_WHITE;
+     } else if (gpu->ly < 72) {
+          col = GB_COL_LIGHTGREY;
+     } else if (gpu->ly < 108) {
+          col = GB_COL_DARKGREY;
+     } else {
+          col = GB_COL_BLACK;
+     }
+
+     for (i = 0; i < GB_LCD_WIDTH; i++) {
+          line[i] = col;
+     }
+
+     gb->frontend.draw_line(gb, gpu->ly, line);
 }
 
 void gb_gpu_sync(struct gb *gb) {
@@ -113,6 +131,11 @@ void gb_gpu_sync(struct gb *gb) {
                gpu->ly++;
                gpu->line_pos = 0;
                line_remaining = HTOTAL;
+
+               if (gpu->ly == VSYNC_START) {
+                    /* We're done drawing the current frame */
+                    gb->frame_done = true;
+               }
 
                if (gpu->ly >= VTOTAL) {
                     /* Move on to the next frame */
