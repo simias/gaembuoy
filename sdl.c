@@ -25,6 +25,39 @@ static void gb_sdl_draw_line(struct gb *gb, unsigned ly,
      }
 }
 
+static void gb_sdl_handle_key(struct gb *gb, SDL_Keycode key, bool pressed) {
+     switch (key) {
+     case SDLK_q:
+     case SDLK_ESCAPE:
+          gb->quit = pressed;
+          break;
+     case SDLK_RETURN:
+          gb_input_set(gb, GB_INPUT_START, pressed);
+          break;
+     case SDLK_RSHIFT:
+          gb_input_set(gb, GB_INPUT_SELECT, pressed);
+          break;
+     case SDLK_LCTRL:
+          gb_input_set(gb, GB_INPUT_A, pressed);
+          break;
+     case SDLK_LSHIFT:
+          gb_input_set(gb, GB_INPUT_B, pressed);
+          break;
+     case SDLK_UP:
+          gb_input_set(gb, GB_INPUT_UP, pressed);
+          break;
+     case SDLK_DOWN:
+          gb_input_set(gb, GB_INPUT_DOWN, pressed);
+          break;
+     case SDLK_LEFT:
+          gb_input_set(gb, GB_INPUT_LEFT, pressed);
+          break;
+     case SDLK_RIGHT:
+          gb_input_set(gb, GB_INPUT_RIGHT, pressed);
+          break;
+     }
+}
+
 static void gb_sdl_refresh_input(struct gb *gb) {
      SDL_Event e;
 
@@ -34,12 +67,10 @@ static void gb_sdl_refresh_input(struct gb *gb) {
                gb->quit = true;
                break;
           case SDL_KEYDOWN:
-               switch (e.key.keysym.sym) {
-               case SDLK_q:
-               case SDLK_ESCAPE:
-                    gb->quit = true;
-                    break;
-               }
+          case SDL_KEYUP:
+               gb_sdl_handle_key(gb, e.key.keysym.sym,
+                                 (e.key.state == SDL_PRESSED));
+               break;
           }
      }
 }

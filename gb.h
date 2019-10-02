@@ -13,6 +13,7 @@ struct gb;
 #include "memory.h"
 #include "cart.h"
 #include "gpu.h"
+#include "input.h"
 
 struct gb {
      /* Counter keeping track of how many CPU cycles have elapsed since an
@@ -28,6 +29,7 @@ struct gb {
      struct gb_cpu cpu;
      struct gb_cart cart;
      struct gb_gpu gpu;
+     struct gb_input input;
      /* Internal RAM */
      uint8_t iram[0x2000];
      /* Zero-page RAM */
