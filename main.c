@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
      gb_sync_reset(&gb);
      gb_cpu_reset(&gb);
      gb_gpu_reset(&gb);
+     gb_input_reset(&gb);
 
      gb.quit = false;
      while (!gb.quit) {
