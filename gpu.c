@@ -309,6 +309,7 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
      struct gb_gpu *gpu = &gb->gpu;
      unsigned sprite_x;
      unsigned sprite_y;
+     unsigned sprite_flip_height;
      uint8_t tile_index;
      uint8_t palette;
      enum gb_color col;
@@ -326,8 +327,18 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
           /* 8x16 sprites use two consecutive tiles. The first tile's index's
            * LSB is always assumed to be 0 */
           tile_index = sprite->tile_index & 0xfe;
+          sprite_flip_height = 15;
      } else {
           tile_index = sprite->tile_index;
+          sprite_flip_height = 7;
+     }
+
+     if (sprite->x_flip) {
+          sprite_x = 7 - sprite_x;
+     }
+
+     if (sprite->y_flip) {
+          sprite_y = sprite_flip_height - sprite_y;
      }
 
      col = gb_gpu_get_tile_color(gb, tile_index, sprite_x, sprite_y, true);
