@@ -10,6 +10,9 @@
 /* Internal RAM */
 #define IRAM_BASE       0xc000U
 #define IRAM_END        (IRAM_BASE + 0x2000U)
+/* Object Attribute Memory (sprite configuration) */
+#define OAM_BASE        0xfe00U
+#define OAM_END         (OAM_BASE + 0xa0U)
 /* Zero page RAM */
 #define ZRAM_BASE       0xff80U
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
@@ -58,6 +61,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      if (addr >= SPU_BASE && addr < SPU_END) {
           /* TODO */
           return 0;
+     }
+
+     if (addr >= OAM_BASE && addr < OAM_END) {
+          return gb->gpu.oam[addr - OAM_BASE];
      }
 
      if (addr == REG_INPUT) {
@@ -122,6 +129,12 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= SPU_BASE && addr < SPU_END) {
           /* TODO */
+          return;
+     }
+
+     if (addr >= OAM_BASE && addr < OAM_END) {
+          gb_gpu_sync(gb);
+          gb->gpu.oam[addr - OAM_BASE] = val;
           return;
      }
 
