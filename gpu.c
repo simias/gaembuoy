@@ -179,10 +179,135 @@ static struct gb_gpu_pixel gb_gpu_get_bg_pixel(struct gb *gb,
      return gb_gpu_get_bg_win_pixel(gb, bgx, bgy, gpu->bg_use_high_tm);
 }
 
+struct gb_sprite {
+     /* Coordinates of the sprite's top-left corner */
+     int x;
+     int y;
+
+     /* Index of the sprite's pixel data in the sprite tile set. 8x16 sprites
+      * use two consecutive tiles */
+     uint8_t tile_index;
+
+     /* True if the sprite must be displayed behind the background (that is,
+      * only visible if the background is disabled or through transparent
+      * pixels) */
+     bool background;
+
+     /* True if the sprite is flipped horizontally or vertically */
+     bool x_flip;
+     bool y_flip;
+
+     /* True if sprite uses palette obp1, otherwise use obp0 */
+     bool use_obp1;
+};
+
+static struct gb_sprite gb_get_oam_sprite(struct gb *gb, unsigned index) {
+     struct gb_gpu *gpu = &gb->gpu;
+     struct gb_sprite s;
+     unsigned oam_off = index * 4;
+     uint8_t flags;
+
+     /* Y coordinates have an offset of 16 (so that they can clip at the top of
+      * the screen) */
+     s.y = (int)gpu->oam[oam_off] - 16;
+
+     /* X coordinates have an offset of 8 (so that they can clip to the left of
+      * the screen) */
+     s.x = (int)gpu->oam[oam_off + 1] - 8;
+
+     s.tile_index = gpu->oam[oam_off + 2];
+
+     flags = gpu->oam[oam_off + 3];
+
+     s.use_obp1 = flags & 0x10;
+     s.x_flip = flags & 0x20;
+     s.y_flip = flags & 0x40;
+     s.background = flags & 0x80;
+
+     return s;
+}
+
+/* Max number of sprites per line */
+#define GB_GPU_LINE_SPRITES 10
+
+static void gb_gpu_get_line_sprites(
+     struct gb *gb,
+     unsigned ly,
+     struct gb_sprite sprites[GB_GPU_LINE_SPRITES + 1]) {
+
+     struct gb_gpu *gpu = &gb->gpu;
+     int i;
+     unsigned n_sprites;
+     unsigned sprite_height;
+
+     if (!gpu->sprite_enable) {
+          /* Sprites are disabled, bail out */
+          sprites[0].x = GB_LCD_WIDTH + 8;
+          return;
+     }
+
+     if (gpu->tall_sprites) {
+          sprite_height = 16;
+     } else {
+          sprite_height = 8;
+     }
+
+     /* Iterate over the OAM and store the sprites that are in the current line.
+      */
+     n_sprites = 0;
+     for (i = 0; i < GB_GPU_MAX_SPRITES; i++) {
+          struct gb_sprite s = gb_get_oam_sprite(gb, i);
+
+          if ((int)ly < s.y || (int)ly >= (s.y + (int)sprite_height)) {
+               /* Sprite isn't on this line */
+               continue;
+          }
+
+          sprites[n_sprites] = s;
+          n_sprites++;
+          if (n_sprites >= GB_GPU_LINE_SPRITES) {
+               /* We reached the maximum number of sprites that can be displayed
+                * on this line, ignore the rest */
+               break;
+          }
+     }
+
+     /* Mark the end of the sprite list with an unreachable out-of-frame sprite
+      */
+     sprites[n_sprites].x = GB_LCD_WIDTH + 8;
+
+     /* Finally we need to sort the sprites by x-coordinate. Careful: if the
+      * sprites have the same x-coordinates the position in OAM gives the
+      * priority so we must use a stable sort to maintain the ordering of values
+      * with the same x value */
+     for (i = 1; i < n_sprites; i++) {
+          struct gb_sprite cur = sprites[i];
+          int j;
+
+          /* We move cur back as long as we don't encounter a sprite with
+           * greater-or-equal x value (or we reach the beginning of the list) */
+          for (j = i - 1; j >= 0; j--) {
+               if (sprites[j].x <= cur.x) {
+                    break;
+               }
+
+               sprites[j + 1] = sprites[j];
+          }
+
+          sprites[j + 1] = cur;
+     }
+}
+
 static void gb_gpu_draw_cur_line(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
      enum gb_color line[GB_LCD_WIDTH];
+     /* We force a "dummy" out-of-frame sprite at the end to avoid checking for
+      * bounds while we draw the line */
+     struct gb_sprite line_sprites[GB_GPU_LINE_SPRITES + 1];
      unsigned x;
+     unsigned cur_sprite = 0;
+
+     gb_gpu_get_line_sprites(gb, gpu->ly, line_sprites);
 
      for (x = 0; x < GB_LCD_WIDTH; x++) {
           struct gb_gpu_pixel p = {
@@ -190,9 +315,29 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
                .opaque = false
           };
 
+          /* Figure out what is the next sprite we must display */
+          while (cur_sprite < GB_GPU_LINE_SPRITES) {
+               if (line_sprites[cur_sprite].x + 8 <= x ) {
+                    /* We're done displaying this sprite */
+                    cur_sprite++;
+               } else {
+                    /* We have not passed this sprite yet */
+                    break;
+               }
+          }
+
           if (gpu->master_enable) {
+               struct gb_sprite s;
+
                if (gpu->bg_enable) {
                     p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
+               }
+
+               s = line_sprites[cur_sprite];
+               /* See if we're in a sprite */
+               if (s.x <= (int)x) {
+                    /* XXX draw the sprite */
+                    p.color = GB_COL_DARKGREY;
                }
           }
 
