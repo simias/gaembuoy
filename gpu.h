@@ -1,6 +1,9 @@
 #ifndef _GB_GPU_H_
 #define _GB_GPU_H_
 
+/* The GPU supports up to 40 sprites concurrently */
+#define GB_GPU_MAX_SPRITES 40
+
 struct gb_gpu {
      /* Background scroll X */
      uint8_t scx;
@@ -40,6 +43,9 @@ struct gb_gpu {
      uint8_t obp1;
      /* Current position within the current line */
      uint16_t line_pos;
+     /* Object Attribute Memory (sprite configuration). Each sprite uses 4 bytes
+      * for attributes. */
+     uint8_t oam[GB_GPU_MAX_SPRITES * 4];
 };
 
 void gb_gpu_reset(struct gb *gb);
