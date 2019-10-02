@@ -61,8 +61,7 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      }
 
      if (addr == REG_INPUT) {
-          /* TODO */
-          return 0xff;
+          return gb_input_get_state(gb);
      }
 
      if (addr == REG_LCDC) {
@@ -127,7 +126,7 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr == REG_INPUT) {
-          /* TODO */
+          gb_input_select(gb, val);
           return;
      }
 
