@@ -5,6 +5,7 @@ struct gb_sdl_context {
      SDL_Window *window;
      SDL_Renderer *renderer;
      SDL_Texture *canvas;
+     SDL_GameController *controller;
      uint32_t pixels[GB_LCD_WIDTH * GB_LCD_HEIGHT];
 };
 
@@ -60,6 +61,92 @@ static void gb_sdl_handle_key(struct gb *gb, SDL_Keycode key, bool pressed) {
      }
 }
 
+static void gb_sdl_handle_button(struct gb *gb, unsigned button, bool pressed) {
+     /* A and B are swapped between the GB and SDL (XBox) conventions */
+     switch (button) {
+     case SDL_CONTROLLER_BUTTON_START:
+          gb_input_set(gb, GB_INPUT_START, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_BACK:
+          gb_input_set(gb, GB_INPUT_SELECT, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_B:
+          gb_input_set(gb, GB_INPUT_A, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_A:
+          gb_input_set(gb, GB_INPUT_B, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_DPAD_UP:
+          gb_input_set(gb, GB_INPUT_UP, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+          gb_input_set(gb, GB_INPUT_DOWN, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+          gb_input_set(gb, GB_INPUT_LEFT, pressed);
+          break;
+     case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+          gb_input_set(gb, GB_INPUT_RIGHT, pressed);
+          break;
+     }
+}
+
+static void gb_sdl_handle_new_controller(struct gb *gb, unsigned index) {
+     struct gb_sdl_context *ctx = gb->frontend.data;
+
+     if (ctx->controller) {
+          /* We already have a controller */
+          return;
+     }
+
+     if (!SDL_IsGameController(index)) {
+          return;
+     }
+
+     ctx->controller = SDL_GameControllerOpen(index);
+     if (ctx->controller != NULL) {
+          printf("Using controller '%s'\n",
+                 SDL_GameControllerName(ctx->controller));
+     }
+}
+
+static void gb_sdl_find_controller(struct gb *gb) {
+     struct gb_sdl_context *ctx = gb->frontend.data;
+     unsigned i;
+
+     for (i = 0; ctx->controller == NULL && i < SDL_NumJoysticks(); i++) {
+          gb_sdl_handle_new_controller(gb, i);
+     }
+
+     if (ctx->controller == NULL) {
+          printf("No controller found\n");
+     }
+}
+
+static void gb_sdl_handle_controller_removed(struct gb *gb, Sint32 which) {
+     struct gb_sdl_context *ctx = gb->frontend.data;
+     SDL_Joystick *joy;
+
+     if (!ctx->controller) {
+          return;
+     }
+
+     joy = SDL_GameControllerGetJoystick(ctx->controller);
+     if (!joy) {
+          return;
+     }
+
+     if (SDL_JoystickInstanceID(joy) == which) {
+          /* the controller we were using has been removed */
+          printf("Controller removed\n");
+          SDL_GameControllerClose(ctx->controller);
+          ctx->controller = NULL;
+
+          /* Attempt to find a replacement */
+          gb_sdl_find_controller(gb);
+     }
+}
+
 static void gb_sdl_refresh_input(struct gb *gb) {
      SDL_Event e;
 
@@ -72,6 +159,17 @@ static void gb_sdl_refresh_input(struct gb *gb) {
           case SDL_KEYUP:
                gb_sdl_handle_key(gb, e.key.keysym.sym,
                                  (e.key.state == SDL_PRESSED));
+               break;
+          case SDL_CONTROLLERBUTTONDOWN:
+          case SDL_CONTROLLERBUTTONUP:
+               gb_sdl_handle_button(gb, e.cbutton.button,
+                                    e.cbutton.state == SDL_PRESSED);
+               break;
+          case SDL_CONTROLLERDEVICEREMOVED:
+               gb_sdl_handle_controller_removed(gb, e.cdevice.which);
+               break;
+          case SDL_CONTROLLERDEVICEADDED:
+               gb_sdl_handle_new_controller(gb, e.cdevice.which);
                break;
           }
      }
@@ -92,6 +190,10 @@ static void gb_sdl_flip(struct gb *gb) {
 static void gb_sdl_destroy(struct gb *gb) {
      struct gb_sdl_context *ctx = gb->frontend.data;
 
+     if (ctx->controller) {
+          SDL_GameControllerClose(ctx->controller);
+     }
+
      SDL_DestroyTexture(ctx->canvas);
      SDL_DestroyRenderer(ctx->renderer);
      SDL_DestroyWindow(ctx->window);
@@ -111,7 +213,7 @@ void gb_sdl_frontend_init(struct gb *gb) {
 
      gb->frontend.data = ctx;
 
-     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
           fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
           die();
      }
@@ -140,4 +242,7 @@ void gb_sdl_frontend_init(struct gb *gb) {
      /* Clear the canvas */
      memset(ctx->pixels, 0, sizeof(ctx->pixels));
      gb_sdl_flip(gb);
+
+     ctx->controller = NULL;
+     gb_sdl_find_controller(gb);
 }
