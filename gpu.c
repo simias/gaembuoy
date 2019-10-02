@@ -35,6 +35,7 @@
 
 void gb_gpu_reset(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
+     unsigned i;
 
      gpu->scx = 0;
      gpu->scy = 0;
@@ -55,6 +56,10 @@ void gb_gpu_reset(struct gb *gb) {
      gpu->obp0 = 0;
      gpu->obp1 = 0;
      gpu->line_pos = 0;
+
+     for (i = 0; i < sizeof(gpu->oam); i++) {
+          gpu->oam[i] = 0;
+     }
 }
 
 static uint8_t gb_gpu_get_mode(struct gb *gb) {
