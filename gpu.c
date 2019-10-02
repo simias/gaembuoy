@@ -298,6 +298,55 @@ static void gb_gpu_get_line_sprites(
      }
 }
 
+/* Attempt to sample the given sprite at the given location on the screen.
+ * Returns false if the sprite is not visible at these coordinates, otherwise it
+ * updates `p` with the pixel color and returns true. */
+static bool gb_gpu_get_sprite_col(struct gb *gb,
+                                  const struct gb_sprite *sprite,
+                                  unsigned x,
+                                  unsigned y,
+                                  struct gb_gpu_pixel *p) {
+     struct gb_gpu *gpu = &gb->gpu;
+     unsigned sprite_x;
+     unsigned sprite_y;
+     uint8_t tile_index;
+     uint8_t palette;
+     enum gb_color col;
+
+     if (sprite->background && p->opaque) {
+          /* Sprite is behind the background layer and the background pixel is
+           * opaque so we return the background color directly */
+          return false;
+     }
+
+     sprite_x = (int)x - sprite->x;
+     sprite_y = (int)y - sprite->y;
+
+     if (gpu->tall_sprites) {
+          /* 8x16 sprites use two consecutive tiles. The first tile's index's
+           * LSB is always assumed to be 0 */
+          tile_index = sprite->tile_index & 0xfe;
+     } else {
+          tile_index = sprite->tile_index;
+     }
+
+     col = gb_gpu_get_tile_color(gb, tile_index, sprite_x, sprite_y, true);
+
+     /* White pixel color (pre-palette) denotes a transparent pixel */
+     if (col == GB_COL_WHITE) {
+          return false;
+     }
+
+     if (sprite->use_obp1) {
+          palette = gpu->obp1;
+     } else {
+          palette = gpu->obp0;
+     }
+
+     p->color = gb_gpu_palette_transform(col, palette);
+     return true;
+}
+
 static void gb_gpu_draw_cur_line(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
      enum gb_color line[GB_LCD_WIDTH];
@@ -305,7 +354,7 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
       * bounds while we draw the line */
      struct gb_sprite line_sprites[GB_GPU_LINE_SPRITES + 1];
      unsigned x;
-     unsigned cur_sprite = 0;
+     unsigned next_sprite = 0;
 
      gb_gpu_get_line_sprites(gb, gpu->ly, line_sprites);
 
@@ -316,10 +365,10 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
           };
 
           /* Figure out what is the next sprite we must display */
-          while (cur_sprite < GB_GPU_LINE_SPRITES) {
-               if (line_sprites[cur_sprite].x + 8 <= x ) {
+          while (next_sprite < GB_GPU_LINE_SPRITES) {
+               if (line_sprites[next_sprite].x + 8 <= x ) {
                     /* We're done displaying this sprite */
-                    cur_sprite++;
+                    next_sprite++;
                } else {
                     /* We have not passed this sprite yet */
                     break;
@@ -328,16 +377,20 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
 
           if (gpu->master_enable) {
                struct gb_sprite s;
+               unsigned i = next_sprite;
 
                if (gpu->bg_enable) {
                     p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
                }
 
-               s = line_sprites[cur_sprite];
-               /* See if we're in a sprite */
-               if (s.x <= (int)x) {
-                    /* XXX draw the sprite */
-                    p.color = GB_COL_DARKGREY;
+               /* Iterate on all sprites at this position until we find one
+                * that's visible or we run out */
+               for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
+                    s = line_sprites[i];
+
+                    if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
+                         break;
+                    }
                }
           }
 
