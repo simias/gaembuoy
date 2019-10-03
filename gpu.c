@@ -374,6 +374,8 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
                .color = GB_COL_WHITE,
                .opaque = false
           };
+          struct gb_sprite s;
+          unsigned i;
 
           /* Figure out what is the next sprite we must display */
           while (next_sprite < GB_GPU_LINE_SPRITES) {
@@ -386,22 +388,17 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
                }
           }
 
-          if (gpu->master_enable) {
-               struct gb_sprite s;
-               unsigned i = next_sprite;
+          if (gpu->bg_enable) {
+               p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
+          }
 
-               if (gpu->bg_enable) {
-                    p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
-               }
+          /* Iterate on all sprites at this position until we find one
+           * that's visible or we run out */
+          for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
+               s = line_sprites[i];
 
-               /* Iterate on all sprites at this position until we find one
-                * that's visible or we run out */
-               for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
-                    s = line_sprites[i];
-
-                    if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
-                         break;
-                    }
+               if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
+                    break;
                }
           }
 
@@ -416,6 +413,12 @@ void gb_gpu_sync(struct gb *gb) {
      int32_t elapsed = gb_sync_resync(gb, GB_SYNC_GPU);
      /* Number of cycles needed to finish the current line */
      uint16_t line_remaining = HTOTAL - gpu->line_pos;
+
+     if (!gpu->master_enable) {
+          /* GPU isn't running */
+          gb_sync_next(gb, GB_SYNC_GPU, GB_SYNC_NEVER);
+          return;
+     }
 
      while (elapsed > 0) {
           uint8_t prev_mode = gb_gpu_get_mode(gb);
@@ -520,13 +523,25 @@ void gb_gpu_set_lcdc(struct gb *gb, uint8_t lcdc) {
      if (master_enable != gpu->master_enable) {
           gpu->master_enable = master_enable;
 
-          if (master_enable) {
-               /* GPU was just re-enabled, restart from the beginning of the
-                * first line */
+          if (master_enable == false) {
+               enum gb_color line[GB_LCD_WIDTH];
+               unsigned i;
+
+               /* Clear the screen */
+               for (i = 0; i < GB_LCD_WIDTH; i++) {
+                    line[i] = GB_COL_WHITE;
+               }
+
+               for (i = 0; i < GB_LCD_HEIGHT; i++) {
+                    gb->frontend.draw_line(gb, i, line);
+               }
+
+               gb->frame_done = true;
+
                gpu->ly = 0;
                gpu->line_pos = 0;
-               gb_gpu_sync(gb);
           }
+          gb_gpu_sync(gb);
      }
 }
 
@@ -550,10 +565,6 @@ uint8_t gb_gpu_get_lcdc(struct gb *gb) {
 
 uint8_t gb_gpu_get_ly(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
-
-     if (!gpu->master_enable) {
-          return 0;
-     }
 
      gb_gpu_sync(gb);
 

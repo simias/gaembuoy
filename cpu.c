@@ -82,7 +82,7 @@ static void gb_cpu_set_hl(struct gb *gb, uint16_t v) {
      gb->cpu.l = v & 0xff;
 }
 
-static void gb_cpu_dump(struct gb *gb) {
+void gb_cpu_dump(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
      fprintf(stderr, "Flags: %c %c %c %c\n",
@@ -2247,19 +2247,21 @@ static gb_instruction_f gb_instructions[0x100] = {
 static void gb_cpu_run_instruction(struct gb *gb) {
      uint8_t instruction;
 
-     gb_cpu_dump(gb);
-
      instruction = gb_cpu_next_i8(gb);
 
      gb_instructions[instruction](gb);
 }
 
-void gb_cpu_run_frame(struct gb *gb) {
-     gb->frame_done = false;
+int32_t gb_cpu_run_cycles(struct gb *gb, int32_t cycles) {
+     /* Rebase the synchronization timestamps, which has the side effect of
+      * setting gb->timestamp to 0 */
+     gb_sync_rebase(gb);
 
-     while (!gb->frame_done) {
+     while (gb->timestamp < cycles) {
           gb_cpu_run_instruction(gb);
      }
+
+     return gb->timestamp;
 }
 
 /*
