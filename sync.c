@@ -56,6 +56,10 @@ void gb_sync_check_events(struct gb *gb) {
      if (ts >= sync->next_event[GB_SYNC_DMA]) {
           gb_dma_sync(gb);
      }
+
+     if (ts >= sync->next_event[GB_SYNC_TIMER]) {
+          gb_timer_sync(gb);
+     }
 }
 
 /* Subtract the current value of the timestamp from all last_sync and next_event

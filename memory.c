@@ -21,6 +21,14 @@
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
 /* Input buttons register */
 #define REG_INPUT       0xff00U
+/* Timer divider */
+#define REG_DIV         0xff04U
+/* Timer counter */
+#define REG_TIMA        0xff05U
+/* Timer modulo */
+#define REG_TMA         0xff06U
+/* Timer controller */
+#define REG_TAC         0xff07U
 /* Interrupt flags */
 #define REG_IF          0xff0fU
 /* Sound registers */
@@ -86,6 +94,25 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_INPUT) {
           return gb_input_get_state(gb);
+     }
+
+     if (addr == REG_DIV) {
+          gb_timer_sync(gb);
+          /* Return the high 8 bits of the divider counter */
+          return gb->timer.divider_counter >> 8;
+     }
+
+     if (addr == REG_TIMA) {
+          gb_timer_sync(gb);
+          return gb->timer.counter;
+     }
+
+     if (addr == REG_TMA) {
+          return gb->timer.modulo;
+     }
+
+     if (addr == REG_TAC) {
+          return gb_timer_get_config(gb);
      }
 
      if (addr == REG_IF) {
@@ -192,6 +219,33 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_INPUT) {
           gb_input_select(gb, val);
+          return;
+     }
+
+     if (addr == REG_DIV) {
+          gb_timer_sync(gb);
+          /* Writing to the divider sets it to 0 (regardless of the value being
+           * written) */
+          gb->timer.divider_counter = 0;
+          return;
+     }
+
+     if (addr == REG_TIMA) {
+          gb_timer_sync(gb);
+          gb->timer.counter = val;
+          gb_timer_sync(gb);
+          return;
+     }
+
+     if (addr == REG_TMA) {
+          gb_timer_sync(gb);
+          gb->timer.modulo = val;
+          gb_timer_sync(gb);
+          return;
+     }
+
+     if (addr == REG_TAC) {
+          gb_timer_set_config(gb, val);
           return;
      }
 
