@@ -18,6 +18,8 @@
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
 /* Input buttons register */
 #define REG_INPUT       0xff00U
+/* Interrupt flags */
+#define REG_IF          0xff0fU
 /* Sound registers */
 #define SPU_BASE        0xff10U
 #define SPU_END         0xff40U
@@ -69,6 +71,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_INPUT) {
           return gb_input_get_state(gb);
+     }
+
+     if (addr == REG_IF) {
+          return gb->irq.irq_flags;
      }
 
      if (addr == REG_LCDC) {
@@ -140,6 +146,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_INPUT) {
           gb_input_select(gb, val);
+          return;
+     }
+
+     if (addr == REG_IF) {
+          gb->irq.irq_flags = val | 0xE0;
           return;
      }
 

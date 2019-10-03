@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
 
      gb_cart_load(&gb, rom_file);
      gb_sync_reset(&gb);
+     gb_irq_reset(&gb);
      gb_cpu_reset(&gb);
      gb_gpu_reset(&gb);
      gb_input_reset(&gb);
