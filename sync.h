@@ -1,6 +1,10 @@
 #ifndef _GB_SYNC_H_
 #define _GB_SYNC_H_
 
+/* If a module doesn't have an event planned we use a large value for next_event
+ * to only refresh it at a very low frequency. */
+#define GB_SYNC_NEVER 10000000
+
 enum gb_sync_token {
      GB_SYNC_GPU = 0,
 
