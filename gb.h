@@ -9,6 +9,7 @@ struct gb;
 
 #include "frontend.h"
 #include "sync.h"
+#include "irq.h"
 #include "cpu.h"
 #include "memory.h"
 #include "cart.h"
@@ -27,6 +28,7 @@ struct gb {
      /* Set by the frontend when the user requested that the emulation stops */
      bool quit;
 
+     struct gb_irq irq;
      struct gb_frontend frontend;
      struct gb_sync sync;
      struct gb_cpu cpu;
