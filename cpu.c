@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include "gb.h"
 
 void gb_cpu_reset(struct gb *gb) {
@@ -2248,8 +2249,67 @@ static gb_instruction_f gb_instructions[0x100] = {
      gb_i_rst_38,
 };
 
+/* Addresses of the interrupt handlers in memory */
+static const uint16_t gb_irq_handlers[5] = {
+     [GB_IRQ_VSYNC]    = 0x0040,
+     [GB_IRQ_LCD_STAT] = 0x0048,
+     [GB_IRQ_TIMER]    = 0x0050,
+     [GB_IRQ_SERIAL]   = 0x0058,
+     [GB_IRQ_INPUT]    = 0x0060
+};
+
+static void gb_cpu_check_interrupts(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
+     struct gb_irq *irq = &gb->irq;
+     uint8_t active_irq;
+     uint16_t handler;
+     unsigned i;
+
+     if (!cpu->irq_enable) {
+          return;
+     }
+
+     /* See if we have an interrupt pending */
+     active_irq = irq->irq_enable & irq->irq_flags & 0x1f;
+
+     if (!active_irq) {
+          return;
+     }
+
+     /* At least one interrupt is active, handle it */
+
+     /* Find the first active IRQ. The order is significant, IRQs with a lower
+      * number have the priority. */
+     for (i = 0; i < 5; i++) {
+          if (active_irq & (1U << i)) {
+               break;
+          }
+     }
+
+     /* That shouldn't happen since we check if we have an active IRQ above */
+     assert(i < 5);
+
+     handler = gb_irq_handlers[i];
+
+     cpu->irq_enable = false;
+
+     /* Entering Interrupt context takes 12 cycles */
+     gb_cpu_clock_tick(gb, 12);
+
+     /* Push current PC on the stack */
+     gb_cpu_pushw(gb, gb->cpu.pc);
+
+     /* We're about to handle this interrupt, acknowledge it */
+     irq->irq_flags &= ~(1U << i);
+
+     /* Jump to the IRQ handler */
+     gb_cpu_load_pc(gb, handler);
+}
+
 static void gb_cpu_run_instruction(struct gb *gb) {
      uint8_t instruction;
+
+     gb_cpu_check_interrupts(gb);
 
      instruction = gb_cpu_next_i8(gb);
 
