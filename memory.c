@@ -7,6 +7,9 @@
 /* Video RAM */
 #define VRAM_BASE       0x8000U
 #define VRAM_END        (VRAM_BASE + 0x2000U)
+/* Cartridge (generally battery-backed) RAM */
+#define CRAM_BASE       0xa000U
+#define CRAM_END        (CRAM_BASE + 0x2000U)
 /* Internal RAM */
 #define IRAM_BASE       0xc000U
 #define IRAM_END        (IRAM_BASE + 0x2000U)
@@ -58,6 +61,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
           return gb->vram[addr - VRAM_BASE];
+     }
+
+     if (addr >= CRAM_BASE && addr < CRAM_END) {
+          return gb->cram[addr - CRAM_BASE];
      }
 
      if (addr >= SPU_BASE && addr < SPU_END) {
@@ -121,6 +128,11 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
 void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
+     if (addr >= ROM_BASE && addr < ROM_END) {
+          printf("ROM write 0x%04x 0x%02x\n", addr, val);
+          return;
+     }
+
      if (addr >= ZRAM_BASE && addr < ZRAM_END) {
           gb->zram[addr - ZRAM_BASE] = val;
           return;
@@ -134,6 +146,12 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr >= VRAM_BASE && addr < VRAM_END) {
           gb_gpu_sync(gb);
           gb->vram[addr - VRAM_BASE] = val;
+          return;
+     }
+
+     if (addr >= CRAM_BASE && addr < CRAM_END) {
+          /* XXX implement write protection */
+          gb->cram[addr - CRAM_BASE] = val;
           return;
      }
 
