@@ -109,6 +109,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb->gpu.obp1;
      }
 
+     if (addr == REG_IE) {
+          return gb->irq.irq_enable;
+     }
+
      printf("Unsupported read at address 0x%04x\n", addr);
      die();
 
@@ -155,7 +159,7 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr == REG_IE) {
-          printf("Store IE=0x%02x\n", val);
+          gb->irq.irq_enable = val;
           return;
      }
 
