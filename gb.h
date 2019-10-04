@@ -15,6 +15,7 @@ struct gb;
 #include "cart.h"
 #include "gpu.h"
 #include "input.h"
+#include "dma.h"
 
 /* DMG CPU frequency. Super GameBoy runs slightly faster (4.295454MHz). */
 #define GB_CPU_FREQ_HZ 4194304U
@@ -35,6 +36,7 @@ struct gb {
      struct gb_cart cart;
      struct gb_gpu gpu;
      struct gb_input input;
+     struct gb_dma dma;
      /* Internal RAM */
      uint8_t iram[0x2000];
      /* Zero-page RAM */

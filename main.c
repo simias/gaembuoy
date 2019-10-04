@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
      gb_cpu_reset(&gb);
      gb_gpu_reset(&gb);
      gb_input_reset(&gb);
+     gb_dma_reset(&gb);
 
      gb.quit = false;
      while (!gb.quit) {
