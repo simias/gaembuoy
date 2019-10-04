@@ -4,6 +4,8 @@
 struct gb_cpu {
      /* Interrupt Master Enable (IME) flag */
      bool irq_enable;
+     /* Value of IRQ enable on the next cycle (for delayed EI) */
+     bool irq_enable_next;
 
      /* Program Counter */
      uint16_t pc;
