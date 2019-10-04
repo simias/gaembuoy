@@ -16,6 +16,7 @@ enum gb_irq_token {
 
 struct gb_irq {
      uint8_t irq_flags;
+     uint8_t irq_enable;
 };
 
 void gb_irq_reset(struct gb *gb);
