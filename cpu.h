@@ -2,6 +2,9 @@
 #define _GB_CPU_H_
 
 struct gb_cpu {
+     /* Interrupt Master Enable (IME) flag */
+     bool irq_enable;
+
      /* Program Counter */
      uint16_t pc;
      /* Stack Pointer */
