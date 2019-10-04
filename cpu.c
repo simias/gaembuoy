@@ -4,6 +4,8 @@
 void gb_cpu_reset(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
+     cpu->irq_enable = false;
+
      cpu->sp = 0xfffe;
      cpu->a  = 0;
      cpu->b  = 0;
@@ -85,11 +87,12 @@ static void gb_cpu_set_hl(struct gb *gb, uint16_t v) {
 void gb_cpu_dump(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
-     fprintf(stderr, "Flags: %c %c %c %c\n",
+     fprintf(stderr, "Flags: %c %c %c %c  IME: %d\n",
              cpu->f_z ? 'Z' : '-',
              cpu->f_n ? 'N' : '-',
              cpu->f_h ? 'H' : '-',
-             cpu->f_c ? 'C' : '-');
+             cpu->f_c ? 'C' : '-',
+             cpu->irq_enable);
      fprintf(stderr, "PC: 0x%04x [%02x %02x %02x]\n",
              cpu->pc,
              gb_memory_readb(gb, cpu->pc),
@@ -186,11 +189,12 @@ static void gb_i_undefined(struct gb *gb) {
 }
 
 static void gb_i_di(struct gb *gb) {
-     // XXX TODO: disable interrupts
+     gb->cpu.irq_enable = false;
 }
 
 static void gb_i_ei(struct gb *gb) {
-     // XXX TODO: enable interrupts
+     /* XXX TODO: should take effect on the next instruction */
+     gb->cpu.irq_enable = true;
 }
 
 static void gb_i_stop(struct gb *gb) {
@@ -1922,7 +1926,7 @@ static void gb_i_ret_nc(struct gb *gb) {
 static void gb_i_reti(struct gb *gb) {
      gb_i_ret(gb);
 
-     // XXX: re-enable interrupts
+     gb->cpu.irq_enable = true;
 }
 
 static void gb_cpu_rst(struct gb *gb, uint16_t target) {
