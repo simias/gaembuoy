@@ -6,6 +6,7 @@ void gb_cpu_reset(struct gb *gb) {
      struct gb_cpu *cpu = &gb->cpu;
 
      cpu->irq_enable = false;
+     cpu->irq_enable_next = false;
 
      cpu->sp = 0xfffe;
      cpu->a  = 0;
@@ -195,11 +196,12 @@ static void gb_i_undefined(struct gb *gb) {
 
 static void gb_i_di(struct gb *gb) {
      gb->cpu.irq_enable = false;
+     gb->cpu.irq_enable_next = false;
 }
 
 static void gb_i_ei(struct gb *gb) {
-     /* XXX TODO: should take effect on the next instruction */
-     gb->cpu.irq_enable = true;
+     /* Interrupts are re-enabled after the *next* instruction */
+     gb->cpu.irq_enable_next = true;
 }
 
 static void gb_i_stop(struct gb *gb) {
@@ -1932,6 +1934,7 @@ static void gb_i_reti(struct gb *gb) {
      gb_i_ret(gb);
 
      gb->cpu.irq_enable = true;
+     gb->cpu.irq_enable_next = true;
 }
 
 static void gb_cpu_rst(struct gb *gb, uint16_t target) {
@@ -2292,6 +2295,7 @@ static void gb_cpu_check_interrupts(struct gb *gb) {
      handler = gb_irq_handlers[i];
 
      cpu->irq_enable = false;
+     cpu->irq_enable_next = false;
 
      /* Entering Interrupt context takes 12 cycles */
      gb_cpu_clock_tick(gb, 12);
@@ -2307,9 +2311,11 @@ static void gb_cpu_check_interrupts(struct gb *gb) {
 }
 
 static void gb_cpu_run_instruction(struct gb *gb) {
+     struct gb_cpu *cpu = &gb->cpu;
      uint8_t instruction;
 
      gb_cpu_check_interrupts(gb);
+     cpu->irq_enable = cpu->irq_enable_next;
 
      instruction = gb_cpu_next_i8(gb);
 
