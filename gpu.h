@@ -35,6 +35,8 @@ struct gb_gpu {
      bool bg_window_use_sprite_ts;
      /* LY register */
      uint8_t ly;
+     /* LYC register */
+     uint8_t lyc;
      /* Background palette */
      uint8_t bgp;
      /* Sprite palette 0 */
