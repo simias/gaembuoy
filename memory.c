@@ -36,6 +36,8 @@
 #define REG_SCX         0xff43U
 /* Current line */
 #define REG_LY          0xff44U
+/* Current line compare */
+#define REG_LYC         0xff45U
 /* DMA */
 #define REG_DMA         0xff46U
 /* Background palette */
@@ -104,6 +106,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_LY) {
           return gb_gpu_get_ly(gb);
+     }
+
+     if (addr == REG_LYC) {
+          return gb->gpu.lyc;
      }
 
      if (addr == REG_DMA) {
@@ -206,6 +212,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_SCX) {
           gb_gpu_sync(gb);
           gb->gpu.scx = val;
+          return;
+     }
+
+     if (addr == REG_LYC) {
+          gb->gpu.lyc = val;
           return;
      }
 
