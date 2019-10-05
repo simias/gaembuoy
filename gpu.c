@@ -52,6 +52,7 @@ void gb_gpu_reset(struct gb *gb) {
      gpu->window_use_high_tm = false;
      gpu->bg_window_use_sprite_ts = false;
      gpu->ly = 0;
+     gpu->lyc = 0;
      gpu->bgp = 0;
      gpu->obp0 = 0;
      gpu->obp1 = 0;
@@ -460,6 +461,11 @@ void gb_gpu_sync(struct gb *gb) {
                     /* Move on to the next frame */
                     gpu->ly = 0;
                }
+
+               if (gpu->iten_lyc && gpu->ly == gpu->lyc) {
+                    /* We reached LYC, trigger interrupt */
+                    gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
+               }
           }
      }
 
@@ -496,12 +502,11 @@ uint8_t gb_gpu_get_lcd_stat(struct gb *gb) {
      gb_gpu_sync(gb);
 
      r |= gb_gpu_get_mode(gb);
+     r |= (gpu->ly == gpu->lyc) << 2;
      r |= gpu->iten_mode0 << 3;
      r |= gpu->iten_mode1 << 4;
      r |= gpu->iten_mode2 << 5;
      r |= gpu->iten_lyc << 6;
-
-     /* XXX: Set LYC coincidence */
 
      return r;
 }
