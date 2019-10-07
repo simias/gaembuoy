@@ -62,6 +62,8 @@ void gb_gpu_reset(struct gb *gb) {
      gpu->bgp = 0;
      gpu->obp0 = 0;
      gpu->obp1 = 0;
+     gpu->wx = 0;
+     gpu->wy = 0;
      gpu->line_pos = 0;
 
      for (i = 0; i < sizeof(gpu->oam); i++) {
