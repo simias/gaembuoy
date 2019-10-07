@@ -7,6 +7,10 @@
  *      | Mode 2: 80 cycles | Mode 3: 172 cycles | Mode 0: 204 cycles |
  *   Total: 456 cycles
  *
+ *   Mode 2: OAM in use
+ *   Mode 3: OAM and VRAM in use
+ *   Mode 0: Horizontal blanking (CPU can access OAM and VRAM)
+ *
  * - We draw each line at the boundary between Mode 3 and Mode 0 (not very
  *   accurate, but simple and works well enough)
  *
@@ -14,6 +18,8 @@
  *      | Active video (Modes 2/3/0): 144 lines |
  *      | VSYNC (Mode 1): 10 lines              |
  *   Total: 154 lines (70224 cycles)
+ *
+ *   Mode 1: Vertical blanking (CPU can access OAM and VRAM)
  */
 
 /* Number of clock cycles spent in Mode 2 (OAM in use) */
@@ -414,6 +420,7 @@ void gb_gpu_sync(struct gb *gb) {
      int32_t elapsed = gb_sync_resync(gb, GB_SYNC_GPU);
      /* Number of cycles needed to finish the current line */
      uint16_t line_remaining = HTOTAL - gpu->line_pos;
+     int32_t next_event;
 
      if (!gpu->master_enable) {
           /* GPU isn't running */
@@ -434,6 +441,10 @@ void gb_gpu_sync(struct gb *gb) {
                     /* We didn't finish the line but we did cross the Mode 3 ->
                      * Mode 0 boundary, draw the current line */
                     gb_gpu_draw_cur_line(gb);
+
+                    if (gpu->iten_mode0) {
+                         gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
+                    }
                }
           } else {
                /* We reached the end of this line */
@@ -444,6 +455,10 @@ void gb_gpu_sync(struct gb *gb) {
                      * reached the Mode 0 boundary yet, which means that we
                      * still have to draw it */
                     gb_gpu_draw_cur_line(gb);
+
+                    if (gpu->iten_mode0) {
+                         gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
+                    }
                }
 
                /* Move on to the next line */
@@ -480,12 +495,25 @@ void gb_gpu_sync(struct gb *gb) {
           }
      }
 
+     /* By default we force a sync at the end of the current line */
+     next_event = line_remaining;
+
+     if (gpu->iten_mode0 && gb_gpu_get_mode(gb) >= 2) {
+          /* Mode 0 IRQ has been requested and we're currently in Mode 2 or 3
+           * (both occurring before mode 0 on a line). In this case we force a
+           * synchronization before the end of the line, at the start of the
+           * mode 0 sequence. If it's not clear look at the comment at the top
+           * of this file describing the GPU timings and the various modes. */
+          next_event -= MODE_0_CYCLES;
+     }
+
      /* Force a sync at the beginning of the next line */
-     gb_sync_next(gb, GB_SYNC_GPU, line_remaining);
+     gb_sync_next(gb, GB_SYNC_GPU, next_event);
 }
 
 void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat) {
      struct gb_gpu *gpu = &gb->gpu;
+     bool prev_iten_mode0 = gpu->iten_mode0;
 
      gb_gpu_sync(gb);
 
@@ -494,12 +522,11 @@ void gb_gpu_set_lcd_stat(struct gb *gb, uint8_t stat) {
      gpu->iten_mode2 = stat & 0x20;
      gpu->iten_lyc   = stat & 0x40;
 
-     fprintf(stderr,
-             "GPU ITEN: mode0: %d, mode1: %d, mode2: %d, lyc: %d\n",
-             gpu->iten_mode0,
-             gpu->iten_mode1,
-             gpu->iten_mode2,
-             gpu->iten_lyc);
+     /* Enabling mode 0 interrupts may change the date of the next event (since
+      * it occurs in the middle of the line */
+     if (!prev_iten_mode0 && gpu->iten_mode0) {
+          gb_gpu_sync(gb);
+     }
 }
 
 uint8_t gb_gpu_get_lcd_stat(struct gb *gb) {
