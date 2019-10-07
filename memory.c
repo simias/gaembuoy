@@ -46,6 +46,10 @@
 #define REG_OBP0        0xff48U
 /* Sprite palette 1 */
 #define REG_OBP1        0xff49U
+/* Window Y position */
+#define REG_WY          0xff4aU
+/* Window X position */
+#define REG_WX          0xff4bU
 /* Interrupt Enable register */
 #define REG_IE          0xffffU
 
@@ -126,6 +130,14 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_OBP1) {
           return gb->gpu.obp1;
+     }
+
+     if (addr == REG_WY) {
+          return gb->gpu.wy;
+     }
+
+     if (addr == REG_WX) {
+          return gb->gpu.wx;
      }
 
      if (addr == REG_IE) {
@@ -240,6 +252,18 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_OBP1) {
           gb_gpu_sync(gb);
           gb->gpu.obp1 = val;
+          return;
+     }
+
+     if (addr == REG_WY) {
+          gb_gpu_sync(gb);
+          gb->gpu.wy = val;
+          return;
+     }
+
+     if (addr == REG_WX) {
+          gb_gpu_sync(gb);
+          gb->gpu.wx = val;
           return;
      }
 
