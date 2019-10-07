@@ -43,6 +43,10 @@ struct gb_gpu {
      uint8_t obp0;
      /* Sprite palette 1 */
      uint8_t obp1;
+     /* Window position X + 7 */
+     uint8_t wx;
+     /* Window position Y */
+     uint8_t wy;
      /* Current position within the current line */
      uint16_t line_pos;
      /* Object Attribute Memory (sprite configuration). Each sprite uses 4 bytes
