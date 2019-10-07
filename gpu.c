@@ -471,6 +471,12 @@ void gb_gpu_sync(struct gb *gb) {
                     /* We reached LYC, trigger interrupt */
                     gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
                }
+
+               if (gpu->iten_mode2 && gpu->ly < VSYNC_START) {
+                    /* Mode 2 is the first mode entered on a new line (outside
+                     * of blanking */
+                    gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
+               }
           }
      }
 
