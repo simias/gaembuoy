@@ -188,6 +188,15 @@ static struct gb_gpu_pixel gb_gpu_get_bg_pixel(struct gb *gb,
      return gb_gpu_get_bg_win_pixel(gb, bgx, bgy, gpu->bg_use_high_tm);
 }
 
+static struct gb_gpu_pixel gb_gpu_get_win_pixel(struct gb *gb,
+                                                unsigned x, unsigned y) {
+     struct gb_gpu *gpu = &gb->gpu;
+     uint8_t wx = x + 7 - gpu->wx;
+     uint8_t wy = y - gpu->wy;
+
+     return gb_gpu_get_bg_win_pixel(gb, wx, wy, gpu->window_use_high_tm);
+}
+
 struct gb_sprite {
      /* Coordinates of the sprite's top-left corner */
      int x;
@@ -368,6 +377,14 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
      return true;
 }
 
+/* Returns true if the given screen coordinates lie within the window */
+static bool gb_gpu_pix_in_window(struct gb *gb, unsigned x, unsigned y) {
+     struct gb_gpu *gpu = &gb->gpu;
+     int wx = (int)gpu->wx - 7;
+
+     return (int)x >= wx && y >= gpu->wy;
+}
+
 static void gb_gpu_draw_cur_line(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
      enum gb_color line[GB_LCD_WIDTH];
@@ -398,7 +415,10 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
                }
           }
 
-          if (gpu->bg_enable) {
+          if (gpu->window_enable && gb_gpu_pix_in_window(gb, x, gpu->ly)) {
+               /* Pixel lies within the window */
+               p = gb_gpu_get_win_pixel(gb, x, gpu->ly);
+          } else if (gpu->bg_enable) {
                p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
           }
 
