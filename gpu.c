@@ -455,6 +455,11 @@ void gb_gpu_sync(struct gb *gb) {
                     /* We're done drawing the current frame */
                     gb->frame_done = true;
                     gb_irq_trigger(gb, GB_IRQ_VSYNC);
+
+                    if (gpu->iten_mode1) {
+                         /* We entered VSYNC, trigger the IRQ */
+                         gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
+                    }
                }
 
                if (gpu->ly >= VTOTAL) {
