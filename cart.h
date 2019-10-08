@@ -6,6 +6,8 @@ enum gb_cart_model {
      GB_CART_SIMPLE = 0,
      /* MBC1 mapper, up to 64 ROM banks, 4 RAM banks */
      GB_CART_MBC1,
+     /* MBC2 mapper, up to 16 ROM banks, one single 512 * 4bit RAM */
+     GB_CART_MBC2,
 };
 
 struct gb_cart {

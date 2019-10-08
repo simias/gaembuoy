@@ -191,6 +191,15 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
      case 0x03: /* MBC1, with RAM and battery backup */
           cart->model = GB_CART_MBC1;
           break;
+     case 0x05: /* MBC2 */
+     case 0x06: /* MBC2 with battery backup */
+          cart->model = GB_CART_MBC2;
+          /* MBC2 always has 512 * 4bits of RAM available */
+          cart->ram_banks = 1;
+          /* Allocate 512 bytes for convenience, but only the low 4 bits should
+           * be used */
+          cart->ram_length = 512;
+          break;
      default:
           fprintf(stderr, "Unsupported cartridge type %x\n",
                   cart->rom[GB_CART_OFF_TYPE]);
@@ -283,6 +292,11 @@ uint8_t gb_cart_rom_readb(struct gb *gb, uint16_t addr) {
                rom_off += (bank - 1) * GB_ROM_BANK_SIZE;
           }
           break;
+     case GB_CART_MBC2:
+          if (addr >= GB_ROM_BANK_SIZE) {
+               rom_off += (cart->cur_rom_bank - 1) * GB_ROM_BANK_SIZE;
+          }
+          break;
      default:
           /* Should not be reached */
           die();
@@ -316,6 +330,16 @@ void gb_cart_rom_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
           } else {
                /* Change MBC1 banking mode */
                cart->mbc1_bank_ram = v & 1;
+          }
+          break;
+     case GB_CART_MBC2:
+          if (addr < 0x2000) {
+               cart->ram_write_protected = ((v & 0xf) != 0xa);
+          } else if (addr < 0x4000) {
+               cart->cur_rom_bank = v & 0xf;
+               if (cart->cur_rom_bank == 0) {
+                    cart->cur_rom_bank = 1;
+               }
           }
           break;
      default:
@@ -362,6 +386,9 @@ uint8_t gb_cart_ram_readb(struct gb *gb, uint16_t addr) {
 
           ram_off = gb_cart_mbc1_ram_off(gb, addr);
           break;
+     case GB_CART_MBC2:
+          ram_off = addr % 512;
+          break;
      default:
           /* Should not be reached */
           die();
@@ -390,6 +417,11 @@ void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
           }
 
           ram_off = gb_cart_mbc1_ram_off(gb, addr);
+          break;
+     case GB_CART_MBC2:
+          ram_off = addr % 512;
+          /* MBC2 only has 4 bits per address, so the high nibble is unusable */
+          v |= 0xf0;
           break;
      default:
           /* Should not be reached */
