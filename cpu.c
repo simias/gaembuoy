@@ -8,6 +8,8 @@ void gb_cpu_reset(struct gb *gb) {
      cpu->irq_enable = false;
      cpu->irq_enable_next = false;
 
+     cpu->halted = false;
+
      cpu->sp = 0xfffe;
      cpu->a  = 0;
      cpu->b  = 0;
@@ -208,9 +210,7 @@ static void gb_i_stop(struct gb *gb) {
 
 /* Halt and wait for interrupt */
 static void gb_i_halt(struct gb *gb) {
-     /* XXX TODO */
-     fprintf(stderr, "Implement HALT!\n");
-     die();
+     gb->cpu.halted = true;
 }
 
 /* Set Carry Flag */
@@ -2264,10 +2264,6 @@ static void gb_cpu_check_interrupts(struct gb *gb) {
      uint16_t handler;
      unsigned i;
 
-     if (!cpu->irq_enable) {
-          return;
-     }
-
      /* See if we have an interrupt pending */
      active_irq = irq->irq_enable & irq->irq_flags & 0x1f;
 
@@ -2275,7 +2271,14 @@ static void gb_cpu_check_interrupts(struct gb *gb) {
           return;
      }
 
-     /* At least one interrupt is active, handle it */
+     /* We have an active IRQ, that gets us outside of halted mode even if the
+      * IME is not set in the CPU */
+     cpu->halted = false;
+
+     if (!cpu->irq_enable) {
+          /* IME is not set, nothing to do */
+          return;
+     }
 
      /* Find the first active IRQ. The order is significant, IRQs with a lower
       * number have the priority. */
@@ -2307,11 +2310,7 @@ static void gb_cpu_check_interrupts(struct gb *gb) {
 }
 
 static void gb_cpu_run_instruction(struct gb *gb) {
-     struct gb_cpu *cpu = &gb->cpu;
      uint8_t instruction;
-
-     gb_cpu_check_interrupts(gb);
-     cpu->irq_enable = cpu->irq_enable_next;
 
      instruction = gb_cpu_next_i8(gb);
 
@@ -2319,12 +2318,37 @@ static void gb_cpu_run_instruction(struct gb *gb) {
 }
 
 int32_t gb_cpu_run_cycles(struct gb *gb, int32_t cycles) {
+     struct gb_cpu *cpu = &gb->cpu;
      /* Rebase the synchronization timestamps, which has the side effect of
       * setting gb->timestamp to 0 */
      gb_sync_rebase(gb);
 
      while (gb->timestamp < cycles) {
-          gb_cpu_run_instruction(gb);
+          /* We check for interrupt before anything else since it could get us
+           * out of halted mode */
+          gb_cpu_check_interrupts(gb);
+          cpu->irq_enable = cpu->irq_enable_next;
+
+          if (cpu->halted) {
+               int32_t skip_cycles;
+
+               /* The CPU is halted so we skip to the next event or `cycles`,
+                * whichever comes first */
+               if (cycles < gb->sync.first_event) {
+                    skip_cycles = cycles - gb->timestamp;
+               } else {
+                    skip_cycles = gb->sync.first_event - gb->timestamp;
+               }
+
+               gb_cpu_clock_tick(gb, skip_cycles);
+
+               /* See if any event needs to run. This may trigger an IRQ which
+                * will un-halt the CPU in the next iteration */
+               gb_sync_check_events(gb);
+
+          } else {
+               gb_cpu_run_instruction(gb);
+          }
      }
 
      return gb->timestamp;
