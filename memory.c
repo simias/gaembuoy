@@ -21,6 +21,10 @@
 #define ZRAM_END        (ZRAM_BASE + 0x7fU)
 /* Input buttons register */
 #define REG_INPUT       0xff00U
+/* Serial Data */
+#define REG_SB          0xff01U
+/* Serial Control */
+#define REG_SC          0xff02U
 /* Timer divider */
 #define REG_DIV         0xff04U
 /* Timer counter */
@@ -94,6 +98,16 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_INPUT) {
           return gb_input_get_state(gb);
+     }
+
+     if (addr == REG_SB) {
+          /* XXX TODO */
+          return 0xff;
+     }
+
+     if (addr == REG_SC) {
+          /* XXX TODO */
+          return 0;
      }
 
      if (addr == REG_DIV) {
@@ -219,6 +233,16 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_INPUT) {
           gb_input_select(gb, val);
+          return;
+     }
+
+     if (addr == REG_SB) {
+          /* XXX TODO */
+          return;
+     }
+
+     if (addr == REG_SC) {
+          /* XXX TODO */
           return;
      }
 
