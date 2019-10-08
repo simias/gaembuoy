@@ -3,9 +3,14 @@
 #include <unistd.h>
 #include "gb.h"
 
+/* GB ROMs are at least 32KB */
+#define GB_CART_MIN_SIZE (32 * 1024)
+
 /* I think the biggest licensed GB cartridge is 8MB but let's add a margin in
  * case there are homebrews with even bigger carts. */
 #define GB_CART_MAX_SIZE (32U * 1024 * 1024)
+
+#define GB_CART_OFF_TYPE      0x147
 
 void gb_cart_load(struct gb *gb, const char *rom_path) {
      struct gb_cart *cart = &gb->cart;
@@ -38,6 +43,11 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
           goto error;
      }
 
+     if (l < GB_CART_MIN_SIZE) {
+          fprintf(stderr, "ROM file is too small!\n");
+          goto error;
+     }
+
      cart->rom_length = l;
      cart->rom = calloc(1, cart->rom_length);
      if (cart->rom == NULL) {
@@ -50,6 +60,16 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
           fprintf(stderr,
                   "Failed to load ROM file (read %u bytes, expected %u)\n",
                   (unsigned)nread, cart->rom_length);
+          goto error;
+     }
+
+     switch (cart->rom[GB_CART_OFF_TYPE]) {
+     case 0x00:
+          cart->model = GB_CART_SIMPLE;
+          break;
+     default:
+          fprintf(stderr, "Unsupported cartridge type %x\n",
+                  cart->rom[GB_CART_OFF_TYPE]);
           goto error;
      }
 
@@ -81,13 +101,56 @@ void gb_cart_unload(struct gb *gb) {
 
 uint8_t gb_cart_rom_readb(struct gb *gb, uint16_t addr) {
      struct gb_cart *cart = &gb->cart;
+     unsigned rom_off = addr;
 
-     if (addr >= cart->rom_length) {
-          fprintf(stderr,
-                  "ROM read out of bounds (length: 0x%x, addr: 0x%04x)\n",
-                  cart->rom_length, addr);
+     switch (cart->model) {
+     case GB_CART_SIMPLE:
+          /* No mapper */
+          break;
+     default:
+          /* Should not be reached */
           die();
      }
 
-     return cart->rom[addr];
+     return cart->rom[rom_off];
+}
+
+void gb_cart_rom_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
+     struct gb_cart *cart = &gb->cart;
+
+     switch (cart->model) {
+     case GB_CART_SIMPLE:
+          /* Nothing to be done */
+          break;
+     default:
+          /* Should not be reached */
+          die();
+     }
+}
+
+uint8_t gb_cart_ram_readb(struct gb *gb, uint16_t addr) {
+     struct gb_cart *cart = &gb->cart;
+
+     switch (cart->model) {
+     case GB_CART_SIMPLE:
+          /* No RAM */
+          return 0xff;
+     default:
+          /* Should not be reached */
+          die();
+          return 0xff;
+     }
+}
+
+void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
+     struct gb_cart *cart = &gb->cart;
+
+     switch (cart->model) {
+     case GB_CART_SIMPLE:
+          /* No RAM */
+          return;
+     default:
+          /* Should not be reached */
+          die();
+     }
 }
