@@ -7,6 +7,9 @@ struct gb_cpu {
      /* Value of IRQ enable on the next cycle (for delayed EI) */
      bool irq_enable_next;
 
+     /* True if the CPU is currently halted */
+     bool halted;
+
      /* Program Counter */
      uint16_t pc;
      /* Stack Pointer */
