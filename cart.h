@@ -4,6 +4,8 @@
 enum gb_cart_model {
      /* No mapper: 2 ROM banks, no RAM */
      GB_CART_SIMPLE = 0,
+     /* MBC1 mapper, up to 64 ROM banks, 4 RAM banks */
+     GB_CART_MBC1,
 };
 
 struct gb_cart {
@@ -11,8 +13,26 @@ struct gb_cart {
      uint8_t *rom;
      /* ROM length in bytes */
      unsigned rom_length;
+     /* Number of ROM banks (each bank is 16KB) */
+     unsigned rom_banks;
+     /* Currently selected ROM bank */
+     unsigned cur_rom_bank;
+     /* Full cartrige ram contents */
+     uint8_t *ram;
+     /* RAM length in bytes */
+     unsigned ram_length;
+     /* Number of RAM banks (each bank is 8KB) */
+     unsigned ram_banks;
+     /* Currently selected RAM bank*/
+     unsigned cur_ram_bank;
+     /* True if RAM is write-protected (read-only) */
+     bool ram_write_protected;
      /* Type of cartridge */
      enum gb_cart_model model;
+     /* False if the MBC1 cartridge operates in 128 ROM banks/1 RAM bank
+      * configuration otherwise it operates in 32 ROM banks/4 RAM banks
+      * configuration. */
+     bool mbc1_bank_ram;
 };
 
 void gb_cart_load(struct gb *gb, const char *rom_path);
