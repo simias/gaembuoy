@@ -91,7 +91,7 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      }
 
      if (addr >= CRAM_BASE && addr < CRAM_END) {
-          return gb->cram[addr - CRAM_BASE];
+          return gb_cart_ram_readb(gb, addr - CRAM_BASE);
      }
 
      if (addr >= SPU_BASE && addr < SPU_END) {
@@ -200,7 +200,7 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= ROM_BASE && addr < ROM_END) {
-          printf("ROM write 0x%04x 0x%02x\n", addr, val);
+          gb_cart_rom_writeb(gb, addr - ROM_BASE, val);
           return;
      }
 
@@ -226,8 +226,7 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr >= CRAM_BASE && addr < CRAM_END) {
-          /* XXX implement write protection */
-          gb->cram[addr - CRAM_BASE] = val;
+          gb_cart_ram_writeb(gb, addr - CRAM_BASE, val);
           return;
      }
 
