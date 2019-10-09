@@ -13,6 +13,9 @@
 /* Internal RAM */
 #define IRAM_BASE       0xc000U
 #define IRAM_END        (IRAM_BASE + 0x2000U)
+/* Internal RAM mirror */
+#define IRAM_ECHO_BASE  0xe000U
+#define IRAM_ECHO_END   (IRAM_ECHO_BASE + 0x1e00U)
 /* Object Attribute Memory (sprite configuration) */
 #define OAM_BASE        0xfe00U
 #define OAM_END         (OAM_BASE + 0xa0U)
@@ -77,6 +80,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
           return gb->iram[addr - IRAM_BASE];
+     }
+
+     if (addr >= IRAM_ECHO_BASE && addr < IRAM_ECHO_END) {
+          return gb->iram[addr - IRAM_ECHO_BASE];
      }
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
@@ -205,6 +212,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
           gb->iram[addr - IRAM_BASE] = val;
+          return;
+     }
+
+     if (addr >= IRAM_ECHO_BASE && addr < IRAM_ECHO_END) {
+          gb->iram[addr - IRAM_ECHO_BASE] = val;
           return;
      }
 
