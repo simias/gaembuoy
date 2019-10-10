@@ -4,7 +4,7 @@ CFLAGS = -Wall -O2 -MMD -MP `pkg-config --cflags sdl2`
 LDFLAGS = `pkg-config --libs sdl2`
 
 SRC = main.c cpu.c memory.c cart.c gpu.c sync.c sdl.c input.c irq.c dma.c \
-      timer.c
+      timer.c spu.c
 
 OBJ = $(SRC:%.c=%.o)
 DEP = $(SRC:%.c=%.d)
