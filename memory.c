@@ -38,9 +38,19 @@
 #define REG_TAC         0xff07U
 /* Interrupt flags */
 #define REG_IF          0xff0fU
-/* Sound registers */
-#define SPU_BASE        0xff10U
-#define SPU_END         0xff40U
+/* Sound 3 registers */
+#define REG_NR30        0xff1aU
+#define REG_NR31        0xff1bU
+#define REG_NR32        0xff1cU
+#define REG_NR33        0xff1dU
+#define REG_NR34        0xff1eU
+/* Sound control registers */
+#define REG_NR50        0xff24U
+#define REG_NR51        0xff25U
+#define REG_NR52        0xff26U
+/* Sound 3 waveform RAM */
+#define NR3_RAM_BASE    0xff30U
+#define NR3_RAM_END     0xff40U
 /* LCD Control register */
 #define REG_LCDC        0xff40U
 /* LCD Stat register */
@@ -94,11 +104,6 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb_cart_ram_readb(gb, addr - CRAM_BASE);
      }
 
-     if (addr >= SPU_BASE && addr < SPU_END) {
-          /* TODO */
-          return 0;
-     }
-
      if (addr >= OAM_BASE && addr < OAM_END) {
           return gb->gpu.oam[addr - OAM_BASE];
      }
@@ -138,6 +143,41 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_IF) {
           return gb->irq.irq_flags;
+     }
+
+     if (addr == REG_NR30) {
+          gb_spu_sync(gb);
+          return (gb->spu.nr3.enable << 7) | 0x7f;
+     }
+
+     if (addr == REG_NR31) {
+          return gb->spu.nr3.t1;
+     }
+
+     if (addr == REG_NR32) {
+          return (gb->spu.nr3.volume_shift << 5) | 0x9f;
+     }
+
+     if (addr == REG_NR33) {
+          /* Write-only */
+          return 0xff;
+     }
+
+     if (addr == REG_NR34) {
+          return (gb->spu.nr3.duration.enable << 6) | 0xbf;
+     }
+
+     if (addr == REG_NR52) {
+          uint8_t r = 0;
+
+          r |= gb->spu.nr3.running << 2;
+          r |= gb->spu.enable << 7;
+
+          return r;
+     }
+
+     if (addr >= NR3_RAM_BASE && addr < NR3_RAM_END) {
+          return gb->spu.nr3.ram[addr - NR3_RAM_BASE];
      }
 
      if (addr == REG_LCDC) {
@@ -230,11 +270,6 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
           return;
      }
 
-     if (addr >= SPU_BASE && addr < SPU_END) {
-          /* TODO */
-          return;
-     }
-
      if (addr >= OAM_BASE && addr < OAM_END) {
           gb_gpu_sync(gb);
           gb->gpu.oam[addr - OAM_BASE] = val;
@@ -290,6 +325,87 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_IE) {
           gb->irq.irq_enable = val;
+          return;
+     }
+
+     if (addr == REG_NR30) {
+          if (gb->spu.enable) {
+               /* Disabling sound 3 stops it. However enabling it doesn't start
+                * it until 0x80 is written in NR34. */
+               bool enable = (val & 0x80);
+
+               gb_spu_sync(gb);
+               gb->spu.nr3.enable = enable;
+               if (!enable) {
+                    gb->spu.nr3.running = false;
+               }
+          }
+          return;
+     }
+
+     if (addr == REG_NR31) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr3.t1 = val;
+               gb_spu_duration_reload(&gb->spu.nr3.duration,
+                                      GB_SPU_NR3_T1_MAX,
+                                      val);
+          }
+          return;
+     }
+
+     if (addr == REG_NR32) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr3.volume_shift = (val >> 5) & 3;
+          }
+          return;
+     }
+
+     if (addr == REG_NR33) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr3.divider.offset &= 0x700;
+               gb->spu.nr3.divider.offset |= val;
+          }
+          return;
+     }
+
+     if (addr == REG_NR34) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr3.divider.offset &= 0xff;
+               gb->spu.nr3.divider.offset |= ((uint16_t)val & 7) << 8;
+
+               gb->spu.nr3.duration.enable = val & 0x40;
+
+               if (val & 0x80) {
+                    gb_spu_nr3_start(gb);
+               }
+          }
+          return;
+     }
+
+     if (addr == REG_NR52) {
+          bool enable = val & 0x80;
+
+          if (gb->spu.enable == enable) {
+               /* No change */
+               return;
+          }
+
+          gb_spu_sync(gb);
+
+          if (!enable) {
+               gb_spu_reset(gb);
+          }
+
+          gb->spu.enable = enable;
+          return;
+     }
+
+     if (addr >= NR3_RAM_BASE && addr < NR3_RAM_END) {
+          gb->spu.nr3.ram[addr - NR3_RAM_BASE] = val;
           return;
      }
 

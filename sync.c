@@ -61,6 +61,10 @@ void gb_sync_check_events(struct gb *gb) {
           gb_timer_sync(gb);
      }
 
+     if (ts >= sync->next_event[GB_SYNC_SPU]) {
+          gb_spu_sync(gb);
+     }
+
      if (ts >= sync->next_event[GB_SYNC_CART]) {
           gb_cart_sync(gb);
      }
