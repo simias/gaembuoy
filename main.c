@@ -62,55 +62,63 @@ void gb_sync_to_realtime(int32_t cycles_since_ref, struct timespec ref_date) {
 }
 
 int main(int argc, char **argv) {
-     struct gb gb;
+     struct gb *gb;
      const char *rom_file;
      struct timespec ref_date;
-
-     memset(&gb, 0, sizeof(gb));
 
      if (argc < 2) {
           fprintf(stderr, "Usage: %s <rom>\n", argv[0]);
           return EXIT_FAILURE;
      }
 
-     gb_sdl_frontend_init(&gb);
+     /* Our context contains semaphores, so we allocate it on the heap so that
+      * it remains visible to all threads no matter what. */
+     gb = calloc(1, sizeof(*gb));
+     if (gb == NULL) {
+          perror("calloc failed");
+          return EXIT_FAILURE;
+     }
+
+     gb_sdl_frontend_init(gb);
 
      rom_file = argv[1];
 
-     gb_cart_load(&gb, rom_file);
-     gb_sync_reset(&gb);
-     gb_irq_reset(&gb);
-     gb_cpu_reset(&gb);
-     gb_gpu_reset(&gb);
-     gb_input_reset(&gb);
-     gb_dma_reset(&gb);
-     gb_timer_reset(&gb);
-     gb_spu_reset(&gb);
+     gb_cart_load(gb, rom_file);
+     gb_sync_reset(gb);
+     gb_irq_reset(gb);
+     gb_cpu_reset(gb);
+     gb_gpu_reset(gb);
+     gb_input_reset(gb);
+     gb_dma_reset(gb);
+     gb_timer_reset(gb);
+     gb_spu_reset(gb);
 
-     gb.quit = false;
-     while (!gb.quit) {
+     gb->quit = false;
+     while (!gb->quit) {
           int32_t elapsed_cycles;
 
           gb_get_time(&ref_date);
 
-          gb.frontend.refresh_input(&gb);
+          gb->frontend.refresh_input(gb);
 
           /* We refresh the display and input at 120Hz. This is a trade-off, if
            * we refresh faster we'll reduce latency at the cost of performance.
            */
-          elapsed_cycles = gb_cpu_run_cycles(&gb, GB_CPU_FREQ_HZ / 120);
+          elapsed_cycles = gb_cpu_run_cycles(gb, GB_CPU_FREQ_HZ / 120);
 
-          if (gb.frame_done) {
+          if (gb->frame_done) {
                /* The GPU has rendered a new frame */
-               gb.frontend.flip(&gb);
-               gb.frame_done = false;
+               gb->frontend.flip(gb);
+               gb->frame_done = false;
           }
 
           gb_sync_to_realtime(elapsed_cycles, ref_date);
      }
 
-     gb.frontend.destroy(&gb);
-     gb_cart_unload(&gb);
+     gb->frontend.destroy(gb);
+     gb_cart_unload(gb);
+
+     free(gb);
 
      return 0;
 }
