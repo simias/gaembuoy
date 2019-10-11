@@ -8,8 +8,27 @@
 /* Effective sample rate for the frontend */
 #define GB_SPU_SAMPLE_RATE_HZ (GB_CPU_FREQ_HZ / GB_SPU_SAMPLE_RATE_DIVISOR)
 
+/* Number of sample frames bufferized. Each frame contains two samples for the
+ * left and right stereo channels */
+#define GB_SPU_SAMPLE_BUFFER_LENGTH 2048
+
+/* Number of entries in the sample buffer ring */
+#define GB_SPU_SAMPLE_BUFFER_COUNT 2
+
 /* Sound 3 RAM size in bytes */
 #define GB_NR3_RAM_SIZE  16
+
+struct gb_spu_sample_buffer {
+     /* Buffer of pairs of stereo samples */
+     int16_t samples[GB_SPU_SAMPLE_BUFFER_LENGTH][2];
+     /* Semaphore set to 1 when the frontend is done sending the audio buffer
+      * and reset to 0 when the SPU starts filling it with new samples. */
+     sem_t free;
+     /* Semaphore set to 1 when the SPU is done filling a buffer and it can be
+      * sent by the frontend. Set to 0 by the frontend when it starts sending
+      * the samples. */
+     sem_t ready;
+};
 
 /* Duration works the same for all 4 sounds but the max values are different */
 #define GB_SPU_NR3_T1_MAX 0xff
@@ -61,6 +80,13 @@ struct gb_spu {
 
      /* Sound 3 state */
      struct gb_spu_nr3 nr3;
+
+     /* Audio buffer exchanged with the frontend */
+     struct gb_spu_sample_buffer buffers[GB_SPU_SAMPLE_BUFFER_COUNT];
+     /* Buffer being currently filled up with fresh samples */
+     unsigned buffer_index;
+     /* Position within the current buffer */
+     unsigned sample_index;
 };
 
 void gb_spu_reset(struct gb *gb);

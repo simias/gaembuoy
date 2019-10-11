@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "gb.h"
 
 static void gb_spu_frequency_reload(struct gb_spu_divider *f) {
@@ -117,11 +118,42 @@ static uint8_t gb_spu_next_nr3_sample(struct gb *gb, unsigned cycles) {
      return sample >> (spu->nr3.volume_shift - 1);
 }
 
+/* Send a pair of left/right samples to the frontend */
+static void gb_spu_send_sample_to_frontend(struct gb *gb,
+                                           int16_t sample_l, int16_t sample_r) {
+     struct gb_spu *spu = &gb->spu;
+     struct gb_spu_sample_buffer *buf;
+
+     buf = &spu->buffers[spu->buffer_index];
+
+     if (spu->sample_index == 0) {
+          /* We're about to fill the first sample, make sure that the
+           * buffer is free. If it's not this will pause the thread until
+           * the frontend frees it, effectively synchronizing us with audio
+           */
+          sem_wait(&buf->free);
+     }
+
+     buf->samples[spu->sample_index][0] = sample_l;
+     buf->samples[spu->sample_index][1] = sample_r;
+
+     spu->sample_index++;
+     if (spu->sample_index == GB_SPU_SAMPLE_BUFFER_LENGTH) {
+          /* We're done with this buffer */
+          sem_post(&buf->ready);
+          /* Move on to the next one */
+          spu->buffer_index = (spu->buffer_index + 1)
+               % GB_SPU_SAMPLE_BUFFER_COUNT;
+          spu->sample_index = 0;
+     }
+}
+
 void gb_spu_sync(struct gb *gb) {
      struct gb_spu *spu = &gb->spu;
      int32_t elapsed = gb_sync_resync(gb, GB_SYNC_SPU);
      int32_t frac;
      int32_t nsamples;
+     int32_t next_sync;
 
      frac = spu->sample_period_frac;
      elapsed += frac;
@@ -131,8 +163,11 @@ void gb_spu_sync(struct gb *gb) {
      while (nsamples--) {
           uint8_t sample =
                gb_spu_next_nr3_sample(gb, GB_SPU_SAMPLE_RATE_DIVISOR - frac);
-          /* XXX TODO: send sample to frontend */
-          (void)sample;
+
+          /* XXX TODO: mix properly */
+          int16_t sample_l = sample << 11;
+          int16_t sample_r = sample << 11;
+          gb_spu_send_sample_to_frontend(gb, sample_l, sample_r);
 
           frac = 0;
      }
@@ -146,7 +181,11 @@ void gb_spu_sync(struct gb *gb) {
 
      spu->sample_period_frac = frac;
 
-     gb_sync_next(gb, GB_SYNC_SPU, GB_SYNC_NEVER);
+     /* Schedule a sync to fill the current buffer */
+     next_sync = (GB_SPU_SAMPLE_BUFFER_LENGTH - spu->sample_index) *
+          GB_SPU_SAMPLE_RATE_DIVISOR;
+     next_sync -= frac;
+     gb_sync_next(gb, GB_SYNC_SPU, next_sync);
 }
 
 void gb_spu_nr3_start(struct gb *gb) {
