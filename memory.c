@@ -167,6 +167,14 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return (gb->spu.nr3.duration.enable << 6) | 0xbf;
      }
 
+     if (addr == REG_NR50) {
+          return gb->spu.output_level;
+     }
+
+     if (addr == REG_NR51) {
+          return gb->spu.sound_mux;
+     }
+
      if (addr == REG_NR52) {
           uint8_t r = 0;
 
@@ -382,6 +390,24 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
                if (val & 0x80) {
                     gb_spu_nr3_start(gb);
                }
+          }
+          return;
+     }
+
+     if (addr == REG_NR50) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.output_level = val;
+               gb_spu_update_sound_amp(gb);
+          }
+          return;
+     }
+
+     if (addr == REG_NR51) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.sound_mux = val;
+               gb_spu_update_sound_amp(gb);
           }
           return;
      }
