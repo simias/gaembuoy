@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <assert.h>
 #include "gb.h"
 
 struct gb_sdl_context {
@@ -6,7 +7,11 @@ struct gb_sdl_context {
      SDL_Renderer *renderer;
      SDL_Texture *canvas;
      SDL_GameController *controller;
+     SDL_AudioSpec audio_spec;
+     SDL_AudioDeviceID audio_device;
      uint32_t pixels[GB_LCD_WIDTH * GB_LCD_HEIGHT];
+     /* Index of the next audio buffer we want to play */
+     unsigned audio_buf_index;
 };
 
 static void gb_sdl_draw_line(struct gb *gb, unsigned ly,
@@ -202,8 +207,36 @@ static void gb_sdl_destroy(struct gb *gb) {
      gb->frontend.data = NULL;
 }
 
+static void gb_sdl_audio_callback(void *userdata,
+                                  Uint8 *stream,
+                                  int len) {
+     struct gb *gb = userdata;
+     struct gb_sdl_context *ctx = gb->frontend.data;
+     struct gb_spu_sample_buffer *buf = &gb->spu.buffers[ctx->audio_buf_index];
+
+     /* Normally the frontend should always request exactly the correct length
+      */
+     assert(len == sizeof(buf->samples));
+
+     if (sem_trywait(&buf->ready) == 0) {
+          /* Buffer is ready */
+          memcpy(stream, buf->samples, sizeof(buf->samples));
+
+          /* Tell the SPU that it can refill this buffer */
+          sem_post(&buf->free);
+          /* Move on to the next buffer */
+          ctx->audio_buf_index = (ctx->audio_buf_index + 1)
+               % GB_SPU_SAMPLE_BUFFER_COUNT;
+     } else {
+          /* Buffer is not ready yet, we're running slow! */
+          fprintf(stderr, "Emulator is running too slow!\n");
+          memset(stream, 0, sizeof(buf->samples));
+     }
+}
+
 void gb_sdl_frontend_init(struct gb *gb) {
      struct gb_sdl_context *ctx;
+     SDL_AudioSpec want;
 
      ctx = malloc(sizeof(*ctx));
      if (ctx == NULL) {
@@ -213,7 +246,11 @@ void gb_sdl_frontend_init(struct gb *gb) {
 
      gb->frontend.data = ctx;
 
-     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
+     ctx->audio_buf_index = 0;
+
+     if (SDL_Init(SDL_INIT_VIDEO |
+                  SDL_INIT_GAMECONTROLLER |
+                  SDL_INIT_AUDIO) < 0) {
           fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
           die();
      }
@@ -233,6 +270,25 @@ void gb_sdl_frontend_init(struct gb *gb) {
           fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
           die();
      }
+
+     SDL_memset(&want, 0, sizeof(want));
+     want.freq = GB_SPU_SAMPLE_RATE_HZ;
+     want.format = AUDIO_S16SYS;
+     want.channels = 2;
+     want.samples = GB_SPU_SAMPLE_BUFFER_LENGTH;
+     want.callback = gb_sdl_audio_callback;
+     want.userdata = gb;
+
+     ctx->audio_device = SDL_OpenAudioDevice(NULL, 0,
+                                             &want, &ctx->audio_spec,
+                                             0 /* No changes allowed */);
+     if (ctx->audio_device == 0) {
+          fprintf(stderr, "SDL_OpenAudioDevice failed: %s\n", SDL_GetError());
+          die();
+     }
+
+     /* Start audio */
+     SDL_PauseAudioDevice(ctx->audio_device, 0);
 
      gb->frontend.draw_line = gb_sdl_draw_line;
      gb->frontend.flip = gb_sdl_flip;
