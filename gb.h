@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <semaphore.h>
 
 struct gb;
 
@@ -27,8 +28,6 @@ struct gb {
      /* Counter keeping track of how many CPU cycles have elapsed since an
       * arbitrary point in time. Used to synchronize the other devices. */
      int32_t timestamp;
-     /* Set by the GPU when a frame has been drawn */
-     bool frame_done;
      /* Set by the frontend when the user requested that the emulation stops */
      bool quit;
 
