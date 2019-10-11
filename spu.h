@@ -78,6 +78,14 @@ struct gb_spu {
       * less than GB_SPU_SAMPLE_RATE_DIVISOR */
      uint8_t sample_period_frac;
 
+     /* NR50 register */
+     uint8_t output_level;
+     /* NR51 register */
+     uint8_t sound_mux;
+
+     /* Amplification factor for each sound for both stereo channels */
+     int16_t sound_amp[4][2];
+
      /* Sound 3 state */
      struct gb_spu_nr3 nr3;
 
@@ -91,6 +99,7 @@ struct gb_spu {
 
 void gb_spu_reset(struct gb *gb);
 void gb_spu_sync(struct gb *gb);
+void gb_spu_update_sound_amp(struct gb *gb);
 void gb_spu_nr3_start(struct gb *gb);
 void gb_spu_duration_reload(struct gb_spu_duration *d,
                             unsigned duration_max,
