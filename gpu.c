@@ -491,7 +491,7 @@ void gb_gpu_sync(struct gb *gb) {
 
                if (gpu->ly == VSYNC_START) {
                     /* We're done drawing the current frame */
-                    gb->frame_done = true;
+                    gb->frontend.flip(gb);
                     gb_irq_trigger(gb, GB_IRQ_VSYNC);
 
                     if (gpu->iten_mode1) {
@@ -602,8 +602,6 @@ void gb_gpu_set_lcdc(struct gb *gb, uint8_t lcdc) {
                for (i = 0; i < GB_LCD_HEIGHT; i++) {
                     gb->frontend.draw_line(gb, i, line);
                }
-
-               gb->frame_done = true;
 
                gpu->ly = 0;
                gpu->line_pos = 0;
