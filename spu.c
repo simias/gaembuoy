@@ -1,6 +1,44 @@
 #include <stdio.h>
 #include "gb.h"
 
+void gb_spu_update_sound_amp(struct gb *gb) {
+     struct gb_spu *spu = &gb->spu;
+     unsigned sound;
+     /* The maximum value a sample can take while summing the raw values */
+     unsigned max_amplitude;
+     unsigned scaling;
+
+     /* Each sound generates values 4bit unsigned values */
+     max_amplitude = 15;
+     /* Which can then be amplified up to 8 times by the `output_level` setting
+      */
+     max_amplitude *= 8;
+     /* Finally we sum up to 4 sounds */
+     max_amplitude *= 4;
+
+     /* Linear scaling to saturate the output at max amplitude */
+     scaling = 0x7fff / max_amplitude;
+
+     for (sound = 0; sound < 4; sound++) {
+          unsigned channel;
+
+          for (channel = 0; channel < 2; channel++) {
+               bool enabled = spu->sound_mux & (1 << (sound + channel * 4));
+               int16_t amp;
+
+               if (enabled) {
+                    amp = 1;
+                    amp += (spu->output_level >> (channel * 4)) & 7;
+                    amp *= scaling;
+               } else {
+                    amp = 0;
+               }
+
+               spu->sound_amp[sound][channel] = amp;
+          }
+     }
+}
+
 static void gb_spu_frequency_reload(struct gb_spu_divider *f) {
      f->counter = 2 * (0x800U - f->offset);
 }
@@ -9,6 +47,10 @@ void gb_spu_reset(struct gb *gb) {
      struct gb_spu *spu = &gb->spu;
 
      spu->enable = true;
+     spu->output_level = 0;
+     spu->sound_mux = 0;
+
+     gb_spu_update_sound_amp(gb);
 
      /* NR3 reset */
      spu->nr3.enable = false;
@@ -161,12 +203,22 @@ void gb_spu_sync(struct gb *gb) {
      nsamples = elapsed / GB_SPU_SAMPLE_RATE_DIVISOR;
 
      while (nsamples--) {
-          uint8_t sample =
-               gb_spu_next_nr3_sample(gb, GB_SPU_SAMPLE_RATE_DIVISOR - frac);
+          int32_t next_sample_delay = GB_SPU_SAMPLE_RATE_DIVISOR - frac;
+          unsigned sound;
+          int16_t sound_samples[4];
+          int16_t sample_l = 0;
+          int16_t sample_r = 0;
 
-          /* XXX TODO: mix properly */
-          int16_t sample_l = sample << 11;
-          int16_t sample_r = sample << 11;
+          sound_samples[0] = 0;
+          sound_samples[1] = 0;
+          sound_samples[2] = gb_spu_next_nr3_sample(gb, next_sample_delay);
+          sound_samples[3] = 0;
+
+          for (sound = 0; sound < 3; sound++) {
+               sample_l += sound_samples[sound] * spu->sound_amp[sound][0];
+               sample_r += sound_samples[sound] * spu->sound_amp[sound][1];
+          }
+
           gb_spu_send_sample_to_frontend(gb, sample_l, sample_r);
 
           frac = 0;
