@@ -38,6 +38,11 @@
 #define REG_TAC         0xff07U
 /* Interrupt flags */
 #define REG_IF          0xff0fU
+/* Sound 2 registers */
+#define REG_NR21        0xff16U
+#define REG_NR22        0xff17U
+#define REG_NR23        0xff18U
+#define REG_NR24        0xff19U
 /* Sound 3 registers */
 #define REG_NR30        0xff1aU
 #define REG_NR31        0xff1bU
@@ -145,6 +150,24 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb->irq.irq_flags;
      }
 
+     if (addr == REG_NR21) {
+          return (gb->spu.nr2.wave.duty_cycle << 6) | 0x3f;
+     }
+
+     if (addr == REG_NR22) {
+          /* TODO: envelope */
+          return 0xff;
+     }
+
+     if (addr == REG_NR23) {
+          /* Write-only */
+          return 0xff;
+     }
+
+     if (addr == REG_NR24) {
+          return (gb->spu.nr2.duration.enable << 6) | 0xbf;
+     }
+
      if (addr == REG_NR30) {
           gb_spu_sync(gb);
           return (gb->spu.nr3.running << 7) | 0x7f;
@@ -178,6 +201,7 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      if (addr == REG_NR52) {
           uint8_t r = 0;
 
+          r |= gb->spu.nr2.running << 1;
           r |= gb->spu.nr3.running << 2;
           r |= gb->spu.enable << 7;
 
@@ -336,6 +360,48 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
           return;
      }
 
+     if (addr == REG_NR21) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr2.wave.duty_cycle = val >> 6;
+               gb_spu_duration_reload(&gb->spu.nr2.duration,
+                                      GB_SPU_NR2_T1_MAX,
+                                      val & 0x3f);
+          }
+          return;
+     }
+
+     if (addr == REG_NR22) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               /* XXX TODO: envelope */
+          }
+          return;
+     }
+
+     if (addr == REG_NR23) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr2.divider.offset &= 0x700;
+               gb->spu.nr2.divider.offset |= val;
+          }
+          return;
+     }
+
+     if (addr == REG_NR24) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr2.divider.offset &= 0xff;
+               gb->spu.nr2.divider.offset |= ((uint16_t)val & 7) << 8;
+
+               gb->spu.nr2.duration.enable = val & 0x40;
+
+               if (val & 0x80) {
+                    gb_spu_nr2_start(gb);
+               }
+          }
+          return;
+     }
      if (addr == REG_NR30) {
           if (gb->spu.enable) {
                /* Disabling sound 3 stops it. However enabling it doesn't start
