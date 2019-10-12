@@ -155,8 +155,7 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      }
 
      if (addr == REG_NR22) {
-          /* TODO: envelope */
-          return 0xff;
+          return gb->spu.nr2.envelope_config;
      }
 
      if (addr == REG_NR23) {
@@ -373,8 +372,8 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr == REG_NR22) {
           if (gb->spu.enable) {
-               gb_spu_sync(gb);
-               /* XXX TODO: envelope */
+               /* Envelope config takes effect on sound start */
+               gb->spu.nr2.envelope_config = val;
           }
           return;
      }

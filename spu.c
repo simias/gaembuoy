@@ -56,6 +56,7 @@ void gb_spu_reset(struct gb *gb) {
      spu->nr2.running = false;
      spu->nr2.duration.enable = false;
      spu->nr2.wave.duty_cycle = 0;
+     spu->nr2.envelope_config = 0;
 
      spu->nr2.divider.offset = 0;
      gb_spu_frequency_reload(&spu->nr2.divider);
@@ -150,6 +151,54 @@ static uint8_t gb_spu_next_wave_sample(struct gb_spu_rectangle_wave *wave,
      return waveforms[wave->duty_cycle][wave->phase / 2];
 }
 
+static void gb_spu_envelope_reload_counter(struct gb_spu_envelope *e) {
+     e->counter = e->step_duration * 0x10000;
+}
+
+/* Reload the envelope config from the register value */
+static void gb_spu_envelope_init(struct gb_spu_envelope *e, uint8_t config) {
+     e->value = config >> 4;
+     e->increment = (config & 8);
+     e->step_duration = config & 7;
+
+     gb_spu_envelope_reload_counter(e);
+}
+
+static bool gb_spu_envelope_active(struct gb_spu_envelope *e) {
+     /* The envelope is stopped if the value is 0 and we're set to decrement */
+     return e->value != 0 || e->increment;
+}
+
+/* Run the envelope if it's enabled. Returns true if the envelope reached an
+ * inactive state and the channel should be disabled. */
+static bool gb_spu_envelope_update(struct gb_spu_envelope *e, unsigned cycles) {
+     if (e->step_duration != 0) {
+          while (cycles) {
+               if (e->counter > cycles) {
+                    e->counter -= cycles;
+                    cycles = 0;
+               } else {
+                    /* Step counter elapsed, apply envelope function */
+                    cycles -= e->counter;
+
+                    if (e->increment) {
+                         if (e->value < 0xf) {
+                              e->value++;
+                         }
+                    } else {
+                         if (e->value > 0) {
+                              e->value--;
+                         }
+                    }
+
+                    gb_spu_envelope_reload_counter(e);
+               }
+          }
+     }
+
+     return !gb_spu_envelope_active(e);
+}
+
 static uint8_t gb_spu_next_nr2_sample(struct gb *gb, unsigned cycles) {
      struct gb_spu *spu = &gb->spu;
      uint8_t sample;
@@ -166,12 +215,19 @@ static uint8_t gb_spu_next_nr2_sample(struct gb *gb, unsigned cycles) {
           return 0;
      }
 
+     if (gb_spu_envelope_update(&spu->nr2.envelope, cycles)) {
+          spu->nr2.running = false;
+     }
+
+     if (!spu->nr2.running) {
+          return 0;
+     }
+
      sound_cycles = gb_spu_frequency_update(&spu->nr2.divider, cycles);
 
      sample = gb_spu_next_wave_sample(&spu->nr2.wave, sound_cycles);
 
-     /* XXX handle envelope */
-     sample *= 0xf;
+     sample *= spu->nr2.envelope.value;
 
      return sample;
 }
@@ -299,7 +355,9 @@ void gb_spu_nr2_start(struct gb *gb) {
 
      spu->nr2.wave.phase = 0;
      gb_spu_frequency_reload(&spu->nr2.divider);
-     spu->nr2.running = true;
+     gb_spu_envelope_init(&spu->nr2.envelope, spu->nr2.envelope_config);
+
+     spu->nr2.running = gb_spu_envelope_active(&spu->nr2.envelope);
 }
 
 void gb_spu_nr3_start(struct gb *gb) {
