@@ -31,6 +31,7 @@ struct gb_spu_sample_buffer {
 };
 
 /* Duration works the same for all 4 sounds but the max values are different */
+#define GB_SPU_NR1_T1_MAX 0x3f
 #define GB_SPU_NR2_T1_MAX 0x3f
 #define GB_SPU_NR3_T1_MAX 0xff
 
@@ -65,6 +66,23 @@ struct gb_spu_envelope {
      bool increment;
      /* Step counter */
      uint32_t counter;
+};
+
+/* Data concerning sound 1: rectangular wave with envelope and frequency sweep
+ */
+struct gb_spu_nr1 {
+     /* True if sound 1 is currently running */
+     bool running;
+     /* Sound 1's length counter */
+     struct gb_spu_duration duration;
+     /* Sound 1's frequency divider */
+     struct gb_spu_divider divider;
+     /* Sound 1's rectangular wave */
+     struct gb_spu_rectangle_wave wave;
+     /* Envelope register configuration */
+     uint8_t envelope_config;
+     /* Active envelope config */
+     struct gb_spu_envelope envelope;
 };
 
 /* Data concerning sound 2: rectangular wave with envelope */
@@ -122,6 +140,8 @@ struct gb_spu {
      /* Amplification factor for each sound for both stereo channels */
      int16_t sound_amp[4][2];
 
+     /* Sound 1 state */
+     struct gb_spu_nr1 nr1;
      /* Sound 2 state */
      struct gb_spu_nr2 nr2;
      /* Sound 3 state */
@@ -138,6 +158,7 @@ struct gb_spu {
 void gb_spu_reset(struct gb *gb);
 void gb_spu_sync(struct gb *gb);
 void gb_spu_update_sound_amp(struct gb *gb);
+void gb_spu_nr1_start(struct gb *gb);
 void gb_spu_nr2_start(struct gb *gb);
 void gb_spu_nr3_start(struct gb *gb);
 void gb_spu_duration_reload(struct gb_spu_duration *d,
