@@ -55,6 +55,18 @@ struct gb_spu_rectangle_wave {
      uint8_t duty_cycle;
 };
 
+struct gb_spu_envelope {
+     /* Duration of each addition/subtraction step in multiples of 65536 steps
+      * (1/64 s). A value of 0 means that the envelope is stopped. */
+     uint8_t step_duration;
+     /* Current value of the envelope */
+     uint8_t value;
+     /* True if we increment `value` at every step, false if decrement it */
+     bool increment;
+     /* Step counter */
+     uint32_t counter;
+};
+
 /* Data concerning sound 2: rectangular wave with envelope */
 struct gb_spu_nr2 {
      /* True if sound 2 is currently running */
@@ -65,6 +77,10 @@ struct gb_spu_nr2 {
      struct gb_spu_divider divider;
      /* Sound 2's rectangular wave */
      struct gb_spu_rectangle_wave wave;
+     /* Envelope register configuration */
+     uint8_t envelope_config;
+     /* Active envelope config */
+     struct gb_spu_envelope envelope;
 };
 
 /* Data concerning sound 3: user-defined waveform */
