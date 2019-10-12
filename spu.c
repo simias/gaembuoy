@@ -52,6 +52,14 @@ void gb_spu_reset(struct gb *gb) {
 
      gb_spu_update_sound_amp(gb);
 
+     /* NR2 reset */
+     spu->nr2.running = false;
+     spu->nr2.duration.enable = false;
+     spu->nr2.wave.duty_cycle = 0;
+
+     spu->nr2.divider.offset = 0;
+     gb_spu_frequency_reload(&spu->nr2.divider);
+
      /* NR3 reset */
      spu->nr3.enable = false;
      spu->nr3.running = false;
@@ -121,6 +129,51 @@ static unsigned gb_spu_frequency_update(struct gb_spu_divider *f,
      }
 
      return count;
+}
+
+#define GB_SPU_NPHASES 16
+static uint8_t gb_spu_next_wave_sample(struct gb_spu_rectangle_wave *wave,
+                                       unsigned phase_steps) {
+     static const uint8_t waveforms[4][GB_SPU_NPHASES / 2] = {
+          /* 1/8 */
+          { 1, 0, 0, 0, 0, 0, 0, 0},
+          /* 1/4 */
+          { 1, 1, 0, 0, 0, 0, 0, 0},
+          /* 1/2 */
+          { 1, 1, 1, 1, 0, 0, 0, 0},
+          /* 3/4 */
+          { 1, 1, 1, 1, 1, 1, 0, 0},
+     };
+
+     wave->phase = (wave->phase + phase_steps) % GB_SPU_NPHASES;
+
+     return waveforms[wave->duty_cycle][wave->phase / 2];
+}
+
+static uint8_t gb_spu_next_nr2_sample(struct gb *gb, unsigned cycles) {
+     struct gb_spu *spu = &gb->spu;
+     uint8_t sample;
+     unsigned sound_cycles;
+
+     /* The duration counter runs even if the sound itself is not running */
+     if (gb_spu_duration_update(&spu->nr2.duration,
+                                GB_SPU_NR2_T1_MAX,
+                                cycles)) {
+          spu->nr2.running = false;
+     }
+
+     if (!spu->nr2.running) {
+          return 0;
+     }
+
+     sound_cycles = gb_spu_frequency_update(&spu->nr2.divider, cycles);
+
+     sample = gb_spu_next_wave_sample(&spu->nr2.wave, sound_cycles);
+
+     /* XXX handle envelope */
+     sample *= 0xf;
+
+     return sample;
 }
 
 static uint8_t gb_spu_next_nr3_sample(struct gb *gb, unsigned cycles) {
@@ -210,7 +263,7 @@ void gb_spu_sync(struct gb *gb) {
           int16_t sample_r = 0;
 
           sound_samples[0] = 0;
-          sound_samples[1] = 0;
+          sound_samples[1] = gb_spu_next_nr2_sample(gb, next_sample_delay);
           sound_samples[2] = gb_spu_next_nr3_sample(gb, next_sample_delay);
           sound_samples[3] = 0;
 
@@ -229,6 +282,7 @@ void gb_spu_sync(struct gb *gb) {
 
      /* Advance the SPU state even if we don't want the sample yet in order to
       * have the correct value for the `running` flags */
+     gb_spu_next_nr2_sample(gb, frac);
      gb_spu_next_nr3_sample(gb, frac);
 
      spu->sample_period_frac = frac;
@@ -238,6 +292,14 @@ void gb_spu_sync(struct gb *gb) {
           GB_SPU_SAMPLE_RATE_DIVISOR;
      next_sync -= frac;
      gb_sync_next(gb, GB_SYNC_SPU, next_sync);
+}
+
+void gb_spu_nr2_start(struct gb *gb) {
+     struct gb_spu *spu = &gb->spu;
+
+     spu->nr2.wave.phase = 0;
+     gb_spu_frequency_reload(&spu->nr2.divider);
+     spu->nr2.running = true;
 }
 
 void gb_spu_nr3_start(struct gb *gb) {
