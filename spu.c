@@ -100,6 +100,11 @@ static uint8_t gb_spu_next_nr3_sample(struct gb *gb, unsigned cycles) {
 
      spu->nr3.index = (spu->nr3.index + sound_cycles) % (GB_NR3_RAM_SIZE * 2);
 
+     if (spu->nr3.volume_shift == 0) {
+          /* Sound is muted */
+          return 0;
+     }
+
      /* We pack two samples per byte */
      sample = spu->nr3.ram[spu->nr3.index / 2];
 
@@ -109,7 +114,7 @@ static uint8_t gb_spu_next_nr3_sample(struct gb *gb, unsigned cycles) {
           sample >>= 4;
      }
 
-     return sample;
+     return sample >> (spu->nr3.volume_shift - 1);
 }
 
 void gb_spu_sync(struct gb *gb) {
