@@ -43,6 +43,14 @@ static void gb_spu_frequency_reload(struct gb_spu_divider *f) {
      f->counter = 2 * (0x800U - f->offset);
 }
 
+void gb_spu_sweep_reload(struct gb_spu_sweep *f, uint8_t conf) {
+     f->shift = conf & 0x7;
+     f->subtract = (conf >> 3) & 1;
+     f->time = (conf >> 4) & 0x7;
+
+     f->counter = 0x8000 * f->time;
+}
+
 void gb_spu_reset(struct gb *gb) {
      struct gb_spu *spu = &gb->spu;
 
@@ -58,8 +66,9 @@ void gb_spu_reset(struct gb *gb) {
      spu->nr1.wave.duty_cycle = 0;
      spu->nr1.envelope_config = 0;
 
-     spu->nr1.divider.offset = 0;
-     gb_spu_frequency_reload(&spu->nr1.divider);
+     spu->nr1.sweep.divider.offset = 0;
+     gb_spu_frequency_reload(&spu->nr1.sweep.divider);
+     gb_spu_sweep_reload(&spu->nr1.sweep, 0);
 
      /* NR2 reset */
      spu->nr2.running = false;
@@ -141,6 +150,69 @@ static unsigned gb_spu_frequency_update(struct gb_spu_divider *f,
      return count;
 }
 
+/* Update the sweep function and the frequency counter and return the number of
+ * times it ran out */
+static unsigned gb_spu_sweep_update(struct gb_spu_sweep *s,
+                                    unsigned cycles,
+                                    bool *disable) {
+     unsigned count = 0;
+     *disable = false;
+
+     if (s->time == 0) {
+          /* Sweep is disabled */
+          return gb_spu_frequency_update(&s->divider, cycles);
+     }
+
+     /* We need to step the sweep function and the frequency function alongside
+      * since the frequency changes with the sweep */
+     while (cycles) {
+          unsigned to_run = cycles;
+
+          if (s->counter < to_run) {
+               to_run = s->counter;
+          }
+
+          if (s->divider.counter < to_run) {
+               to_run = s->divider.counter;
+          }
+
+          s->counter -= to_run;
+          if (s->counter == 0) {
+               /* Sweep step elapsed */
+               uint16_t delta = s->divider.offset >> s->shift;
+
+               if (s->subtract) {
+                    /* If we're subtracting and the shift value is zero or it
+                     * would overflow we do nothing and the divider offset is
+                     * not changed */
+                    if (s->shift != 0 && delta <= s->divider.offset) {
+                         s->divider.offset -= delta;
+                    }
+               } else {
+                    uint32_t o = s->divider.offset;
+
+                    o += delta;
+
+                    if (o > 0x7ff) {
+                         /* If the addition overflows the sound is disabled */
+                         *disable = true;
+                         break;
+                    }
+
+                    s->divider.offset = o;
+               }
+
+               /* Reload counter */
+               s->counter = 0x8000 * s->time;
+          }
+
+          count += gb_spu_frequency_update(&s->divider, to_run);
+          cycles -= to_run;
+     }
+
+     return count;
+}
+
 #define GB_SPU_NPHASES 16
 static uint8_t gb_spu_next_wave_sample(struct gb_spu_rectangle_wave *wave,
                                        unsigned phase_steps) {
@@ -212,6 +284,7 @@ static uint8_t gb_spu_next_nr1_sample(struct gb *gb, unsigned cycles) {
      struct gb_spu *spu = &gb->spu;
      uint8_t sample;
      unsigned sound_cycles;
+     bool disable;
 
      /* The duration counter runs even if the sound itself is not running */
      if (gb_spu_duration_update(&spu->nr1.duration,
@@ -232,7 +305,11 @@ static uint8_t gb_spu_next_nr1_sample(struct gb *gb, unsigned cycles) {
           return 0;
      }
 
-     sound_cycles = gb_spu_frequency_update(&spu->nr1.divider, cycles);
+     sound_cycles = gb_spu_sweep_update(&spu->nr1.sweep, cycles, &disable);
+     if (disable) {
+          spu->nr1.running = false;
+          return 0;
+     }
 
      sample = gb_spu_next_wave_sample(&spu->nr1.wave, sound_cycles);
 
@@ -397,7 +474,7 @@ void gb_spu_nr1_start(struct gb *gb) {
      struct gb_spu *spu = &gb->spu;
 
      spu->nr1.wave.phase = 0;
-     gb_spu_frequency_reload(&spu->nr1.divider);
+     gb_spu_frequency_reload(&spu->nr1.sweep.divider);
      gb_spu_envelope_init(&spu->nr1.envelope, spu->nr1.envelope_config);
 
      spu->nr1.running = gb_spu_envelope_active(&spu->nr1.envelope);
