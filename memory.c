@@ -39,6 +39,7 @@
 /* Interrupt flags */
 #define REG_IF          0xff0fU
 /* Sound 1 registers */
+#define REG_NR10        0xff10U
 #define REG_NR11        0xff11U
 #define REG_NR12        0xff12U
 #define REG_NR13        0xff13U
@@ -153,6 +154,16 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_IF) {
           return gb->irq.irq_flags;
+     }
+
+     if (addr == REG_NR10) {
+          uint8_t r = 0x80;
+
+          r |= gb->spu.nr1.sweep.shift;
+          r |= gb->spu.nr1.sweep.subtract << 3;
+          r |= gb->spu.nr1.sweep.time << 4;
+
+          return r;
      }
 
      if (addr == REG_NR11) {
@@ -381,6 +392,14 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
           return;
      }
 
+     if (addr == REG_NR10) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb_spu_sweep_reload(&gb->spu.nr1.sweep, val);
+          }
+          return;
+     }
+
      if (addr == REG_NR11) {
           if (gb->spu.enable) {
                gb_spu_sync(gb);
@@ -403,8 +422,8 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_NR13) {
           if (gb->spu.enable) {
                gb_spu_sync(gb);
-               gb->spu.nr1.divider.offset &= 0x700;
-               gb->spu.nr1.divider.offset |= val;
+               gb->spu.nr1.sweep.divider.offset &= 0x700;
+               gb->spu.nr1.sweep.divider.offset |= val;
           }
           return;
      }
@@ -412,8 +431,8 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_NR14) {
           if (gb->spu.enable) {
                gb_spu_sync(gb);
-               gb->spu.nr1.divider.offset &= 0xff;
-               gb->spu.nr1.divider.offset |= ((uint16_t)val & 7) << 8;
+               gb->spu.nr1.sweep.divider.offset &= 0xff;
+               gb->spu.nr1.sweep.divider.offset |= ((uint16_t)val & 7) << 8;
 
                gb->spu.nr1.duration.enable = val & 0x40;
 
