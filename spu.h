@@ -49,6 +49,19 @@ struct gb_spu_divider {
      uint16_t counter;
 };
 
+struct gb_spu_sweep {
+     /* Frequency divider */
+     struct gb_spu_divider divider;
+     /* Frequency sweep amount */
+     uint8_t shift;
+     /* True if we subtract the offset, otherwise we add it */
+     bool subtract;
+     /* Delay between sweep steps in 1/128th of a second (or 0 if disabled) */
+     uint8_t time;
+     /* Counter to the next sweep step */
+     uint32_t counter;
+};
+
 struct gb_spu_rectangle_wave {
      /* Current phase within the duty cycle */
      uint8_t phase;
@@ -75,8 +88,8 @@ struct gb_spu_nr1 {
      bool running;
      /* Sound 1's length counter */
      struct gb_spu_duration duration;
-     /* Sound 1's frequency divider */
-     struct gb_spu_divider divider;
+     /* Sound 1's frequency divider and sweep function */
+     struct gb_spu_sweep sweep;
      /* Sound 1's rectangular wave */
      struct gb_spu_rectangle_wave wave;
      /* Envelope register configuration */
@@ -164,5 +177,6 @@ void gb_spu_nr3_start(struct gb *gb);
 void gb_spu_duration_reload(struct gb_spu_duration *d,
                             unsigned duration_max,
                             uint8_t t1);
+void gb_spu_sweep_reload(struct gb_spu_sweep *f, uint8_t conf);
 
 #endif /* _SPU_H_ */
