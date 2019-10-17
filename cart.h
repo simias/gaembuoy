@@ -46,6 +46,7 @@ struct gb_cart {
 
 void gb_cart_load(struct gb *gb, const char *rom_path);
 void gb_cart_unload(struct gb *gb);
+void gb_cart_sync(struct gb *gb);
 uint8_t gb_cart_rom_readb(struct gb *gb, uint16_t addr);
 void gb_cart_rom_writeb(struct gb *gb, uint16_t addr, uint8_t v);
 uint8_t gb_cart_ram_readb(struct gb *gb, uint16_t addr);
