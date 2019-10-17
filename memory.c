@@ -55,6 +55,11 @@
 #define REG_NR32        0xff1cU
 #define REG_NR33        0xff1dU
 #define REG_NR34        0xff1eU
+/* Sound 4 registers */
+#define REG_NR41        0xff20U
+#define REG_NR42        0xff21U
+#define REG_NR43        0xff22U
+#define REG_NR44        0xff23U
 /* Sound control registers */
 #define REG_NR50        0xff24U
 #define REG_NR51        0xff25U
@@ -220,6 +225,23 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_NR34) {
           return (gb->spu.nr3.duration.enable << 6) | 0xbf;
+     }
+
+     if (addr == REG_NR41) {
+          /* Read-only */
+          return 0xff;
+     }
+
+     if (addr == REG_NR42) {
+          return gb->spu.nr4.envelope_config;
+     }
+
+     if (addr == REG_NR43) {
+          return gb->spu.nr4.lfsr_config;
+     }
+
+     if (addr == REG_NR44) {
+          return (gb->spu.nr4.duration.enable << 6) | 0xbf;
      }
 
      if (addr == REG_NR50) {
@@ -539,6 +561,45 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
                if (val & 0x80) {
                     gb_spu_nr3_start(gb);
+               }
+          }
+          return;
+     }
+
+     if (addr == REG_NR41) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb_spu_duration_reload(&gb->spu.nr4.duration,
+                                      GB_SPU_NR4_T1_MAX,
+                                      val & 0x3f);
+          }
+          return;
+     }
+
+     if (addr == REG_NR42) {
+          if (gb->spu.enable) {
+               /* Envelope config takes effect on sound start */
+               gb->spu.nr4.envelope_config = val;
+          }
+          return;
+     }
+
+     if (addr == REG_NR43) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+               gb->spu.nr4.lfsr_config = val;
+          }
+          return;
+     }
+
+     if (addr == REG_NR44) {
+          if (gb->spu.enable) {
+               gb_spu_sync(gb);
+
+               gb->spu.nr4.duration.enable = val & 0x40;
+
+               if (val & 0x80) {
+                    gb_spu_nr4_start(gb);
                }
           }
           return;
