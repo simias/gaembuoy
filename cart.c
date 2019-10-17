@@ -210,6 +210,11 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
      case 0x13: /* MBC3, with RAM and battery backup */
           cart->model = GB_CART_MBC3;
           break;
+     case 0x19: /* MBC5, no RAM */
+     case 0x1a: /* MBC5, with RAM */
+     case 0x1b: /* MBC5, with RAM and battery backup */
+          cart->model = GB_CART_MBC5;
+          break;
      default:
           fprintf(stderr, "Unsupported cartridge type %x\n",
                   cart->rom[GB_CART_OFF_TYPE]);
@@ -418,6 +423,16 @@ uint8_t gb_cart_rom_readb(struct gb *gb, uint16_t addr) {
                rom_off += (cart->cur_rom_bank - 1) * GB_ROM_BANK_SIZE;
           }
           break;
+     case GB_CART_MBC5:
+          if (addr >= GB_ROM_BANK_SIZE) {
+               /* Bank 0 can be remapped as bank 1 with this controller, so we
+                * need to be careful to handle that case correctly */
+               unsigned bank = cart->cur_rom_bank % cart->rom_banks;
+
+               rom_off -= GB_ROM_BANK_SIZE;
+               rom_off += bank * GB_ROM_BANK_SIZE;
+          }
+          break;
      default:
           /* Should not be reached */
           die();
@@ -481,6 +496,24 @@ void gb_cart_rom_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
                }
           }
           break;
+     case GB_CART_MBC5:
+          if (addr < 0x2000) {
+               cart->ram_write_protected = ((v & 0xf) != 0xa);
+          } else if (addr < 0x3000) {
+               /* Set ROM bank, low 8 bits */
+               cart->cur_rom_bank &= 0x100;
+               cart->cur_rom_bank |= v;
+          } else if (addr < 0x4000) {
+               /* Set ROM bank, MSB */
+               cart->cur_rom_bank &= 0xff;
+               cart->cur_rom_bank |= (v & 1) << 8;
+          } else if (addr < 0x6000) {
+               /* Set RAM bank */
+               if (cart->ram_banks > 0) {
+                    cart->cur_ram_bank = (v & 0xf) % cart->ram_banks;
+               }
+          }
+          break;
      default:
           /* Should not be reached */
           die();
@@ -529,6 +562,7 @@ uint8_t gb_cart_ram_readb(struct gb *gb, uint16_t addr) {
           ram_off = addr % 512;
           break;
      case GB_CART_MBC3:
+     case GB_CART_MBC5:
           if (cart->ram_banks == 0) {
                /* No RAM */
                return 0xff;
@@ -571,6 +605,7 @@ void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
           v |= 0xf0;
           break;
      case GB_CART_MBC3:
+     case GB_CART_MBC5:
           if (cart->ram_banks == 0) {
                /* No RAM */
                return;
