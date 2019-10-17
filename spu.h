@@ -34,6 +34,7 @@ struct gb_spu_sample_buffer {
 #define GB_SPU_NR1_T1_MAX 0x3f
 #define GB_SPU_NR2_T1_MAX 0x3f
 #define GB_SPU_NR3_T1_MAX 0xff
+#define GB_SPU_NR4_T1_MAX 0x3f
 
 struct gb_spu_duration {
      /* True if the duration counter is enabled */
@@ -135,6 +136,24 @@ struct gb_spu_nr3 {
      uint8_t index;
 };
 
+/* Data concerning sound 4: LFSR noise generation with envelope */
+struct gb_spu_nr4 {
+     /* True if sound 4 is currently running */
+     bool running;
+     /* Sound 4's length counter */
+     struct gb_spu_duration duration;
+     /* Envelope register configuration */
+     uint8_t envelope_config;
+     /* Active envelope config */
+     struct gb_spu_envelope envelope;
+     /* Linear Feedback Shift Register */
+     uint16_t lfsr;
+     /* LFSR configuration register (NR43) */
+     uint8_t lfsr_config;
+     /* Counter to the next LFSR shift */
+     uint32_t counter;
+};
+
 struct gb_spu {
      /* Master enable. When false all SPU circuits are disabled and the SPU
       * configuration is reset. It's not possible to configure the other SPU
@@ -159,6 +178,8 @@ struct gb_spu {
      struct gb_spu_nr2 nr2;
      /* Sound 3 state */
      struct gb_spu_nr3 nr3;
+     /* Sound 4 state */
+     struct gb_spu_nr4 nr4;
 
      /* Audio buffer exchanged with the frontend */
      struct gb_spu_sample_buffer buffers[GB_SPU_SAMPLE_BUFFER_COUNT];
@@ -174,6 +195,7 @@ void gb_spu_update_sound_amp(struct gb *gb);
 void gb_spu_nr1_start(struct gb *gb);
 void gb_spu_nr2_start(struct gb *gb);
 void gb_spu_nr3_start(struct gb *gb);
+void gb_spu_nr4_start(struct gb *gb);
 void gb_spu_duration_reload(struct gb_spu_duration *d,
                             unsigned duration_max,
                             uint8_t t1);
