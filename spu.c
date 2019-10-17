@@ -43,6 +43,20 @@ static void gb_spu_frequency_reload(struct gb_spu_divider *f) {
      f->counter = 2 * (0x800U - f->offset);
 }
 
+static void gb_spu_lfsr_counter_reload(struct gb_spu_nr4 *nr4) {
+     /* The LFSR clock has a divider and a shifter */
+     uint8_t div = nr4->lfsr_config & 7;
+     uint8_t shift = (nr4->lfsr_config >> 4) + 1;
+
+     if (div == 0) {
+          nr4->counter = 4;
+     } else {
+          nr4->counter = 8 * div;
+     }
+
+     nr4->counter <<= shift;
+}
+
 void gb_spu_sweep_reload(struct gb_spu_sweep *f, uint8_t conf) {
      f->shift = conf & 0x7;
      f->subtract = (conf >> 3) & 1;
@@ -91,8 +105,12 @@ void gb_spu_reset(struct gb *gb) {
      spu->nr3.divider.offset = 0;
      gb_spu_frequency_reload(&spu->nr3.divider);
 
-     spu->nr3.duration.enable = false;
-     spu->nr3.t1 = 0;
+     /* NR4 reset */
+     spu->nr4.running = false;
+     spu->nr4.duration.enable = false;
+     spu->nr4.envelope_config = 0;
+     spu->nr4.lfsr_config = 0;
+     spu->nr4.lfsr = 0x7fff;
 }
 
 void gb_spu_duration_reload(struct gb_spu_duration *d,
@@ -388,6 +406,67 @@ static uint8_t gb_spu_next_nr3_sample(struct gb *gb, unsigned cycles) {
      return sample >> (spu->nr3.volume_shift - 1);
 }
 
+static void gb_spu_lfsr_step(struct gb_spu_nr4 *nr4) {
+     /* If true the lfsr only uses 7 bits for the effective register period */
+     bool period_7bits = nr4->lfsr_config & 0x8;
+     uint16_t shifted;
+     uint16_t carry;
+
+     shifted = nr4->lfsr >> 1;
+     carry = (nr4->lfsr ^ shifted) & 1;
+
+     nr4->lfsr = shifted;
+     nr4->lfsr |= carry << 14;
+
+     if (period_7bits) {
+          /* Carry is also copied to bit 6 */
+          nr4->lfsr &= ~(1U << 6);
+          nr4->lfsr |= carry << 6;
+     }
+}
+
+static uint8_t gb_spu_next_nr4_sample(struct gb *gb, unsigned cycles) {
+     struct gb_spu *spu = &gb->spu;
+     uint8_t sample;
+
+     /* The duration counter runs even if the sound itself is not running */
+     if (gb_spu_duration_update(&spu->nr4.duration,
+                                GB_SPU_NR4_T1_MAX,
+                                cycles)) {
+          spu->nr4.running = false;
+     }
+
+     if (!spu->nr4.running) {
+          return 0;
+     }
+
+     if (gb_spu_envelope_update(&spu->nr4.envelope, cycles)) {
+          spu->nr4.running = false;
+     }
+
+     if (!spu->nr4.running) {
+          return 0;
+     }
+
+     while (cycles) {
+          if (spu->nr4.counter > cycles) {
+               spu->nr4.counter -= cycles;
+               cycles = 0;
+          } else {
+               cycles -= spu->nr4.counter;
+               gb_spu_lfsr_counter_reload(&spu->nr4);
+               gb_spu_lfsr_step(&spu->nr4);
+          }
+     }
+
+     /* Sample is 0 if the LFSR's LSB is 0, otherwise it's the envelope's value
+      */
+     sample = spu->nr4.lfsr & 1;
+     sample *= spu->nr4.envelope.value;
+
+     return sample;
+}
+
 /* Send a pair of left/right samples to the frontend */
 static void gb_spu_send_sample_to_frontend(struct gb *gb,
                                            int16_t sample_l, int16_t sample_r) {
@@ -440,9 +519,9 @@ void gb_spu_sync(struct gb *gb) {
           sound_samples[0] = gb_spu_next_nr1_sample(gb, next_sample_delay);
           sound_samples[1] = gb_spu_next_nr2_sample(gb, next_sample_delay);
           sound_samples[2] = gb_spu_next_nr3_sample(gb, next_sample_delay);
-          sound_samples[3] = 0;
+          sound_samples[3] = gb_spu_next_nr4_sample(gb, next_sample_delay);
 
-          for (sound = 0; sound < 3; sound++) {
+          for (sound = 0; sound < 4; sound++) {
                sample_l += sound_samples[sound] * spu->sound_amp[sound][0];
                sample_r += sound_samples[sound] * spu->sound_amp[sound][1];
           }
@@ -460,6 +539,7 @@ void gb_spu_sync(struct gb *gb) {
      gb_spu_next_nr1_sample(gb, frac);
      gb_spu_next_nr2_sample(gb, frac);
      gb_spu_next_nr3_sample(gb, frac);
+     gb_spu_next_nr4_sample(gb, frac);
 
      spu->sample_period_frac = frac;
 
@@ -501,4 +581,12 @@ void gb_spu_nr3_start(struct gb *gb) {
      spu->nr3.index = 0;
      spu->nr3.running = true;
      gb_spu_frequency_reload(&spu->nr3.divider);
+}
+
+void gb_spu_nr4_start(struct gb *gb) {
+     struct gb_spu *spu = &gb->spu;
+
+     gb_spu_envelope_init(&spu->nr4.envelope, spu->nr4.envelope_config);
+     gb_spu_lfsr_counter_reload(&spu->nr4);
+     spu->nr4.running = true;
 }
