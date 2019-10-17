@@ -375,6 +375,11 @@ void gb_cart_unload(struct gb *gb) {
      }
 }
 
+void gb_cart_sync(struct gb *gb) {
+     gb_cart_ram_save(gb);
+     gb_sync_next(gb, GB_SYNC_CART, GB_SYNC_NEVER);
+}
+
 uint8_t gb_cart_rom_readb(struct gb *gb, uint16_t addr) {
      struct gb_cart *cart = &gb->cart;
      unsigned rom_off = addr;
@@ -579,5 +584,10 @@ void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
      }
 
      cart->ram[ram_off] = v;
-     cart->dirty_ram = true;
+     if (cart->save_file) {
+          cart->dirty_ram = true;
+          /* Schedule a save in a short while if we don't have changes by then
+           */
+          gb_sync_next(gb, GB_SYNC_CART, 3 * GB_CPU_FREQ_HZ);
+     }
 }
