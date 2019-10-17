@@ -1,7 +1,8 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <string.h>
+#include <errno.h>
 #include "gb.h"
 
 /* 16KB ROM banks */
@@ -50,6 +51,7 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
      long l;
      size_t nread;
      char rom_title[17];
+     bool has_battery_backup;
 
      cart->rom = NULL;
      cart->cur_rom_bank = 1;
@@ -57,6 +59,9 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
      cart->cur_ram_bank = 0;
      cart->ram_write_protected = true;
      cart->mbc1_bank_ram = false;
+     cart->save_file = NULL;
+     cart->dirty_ram = false;
+     has_battery_backup = false;
 
      if (f == NULL) {
           perror("Can't open ROM file");
@@ -205,6 +210,20 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
           goto error;
      }
 
+     /* Check if cart has a battery for memory backup */
+     switch (cart->rom[GB_CART_OFF_TYPE]) {
+     case 0x03:
+     case 0x06:
+     case 0x09:
+     case 0x0f:
+     case 0x10:
+     case 0x13:
+     case 0x1b:
+     case 0x1e:
+     case 0xff:
+          has_battery_backup = true;
+     }
+
      /* Allocate RAM buffer */
      if (cart->ram_length > 0) {
           cart->ram = calloc(1, cart->ram_length);
@@ -212,6 +231,52 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
                perror("Can't allocate RAM buffer");
                goto error;
           }
+     } else {
+          /* Memory backup without RAM doesn't make a lot of sense */
+          has_battery_backup = false;
+     }
+
+     if (has_battery_backup) {
+          /* Attempt to load save file. We assume that the save file is the name
+           * of the rom with the extension changed to '.sav'. If no extension is
+           * found we simply append '.sav' to the ROM filename */
+          const size_t path_len = strlen(rom_path);
+          FILE *f;
+          size_t pos;
+
+          cart->save_file = malloc(path_len + strlen(".sav"));
+          if (cart->save_file == NULL) {
+               perror("malloc failed");
+               goto error;
+          }
+
+          strcpy(cart->save_file, rom_path);
+
+          /* Scan for extension */
+          for (pos = path_len - 1; pos > 0; pos--) {
+               if (cart->save_file[pos] == '.') {
+                    /* Found the extension, truncate it */
+                    cart->save_file[pos] = '\0';
+                    break;
+               }
+          }
+
+          strcat(cart->save_file, ".sav");
+
+          /* First we attempt to load the save file if it already exists */
+          f = fopen(cart->save_file, "rb");
+          if (f != NULL) {
+               /* The file exists, load RAM contents */
+               nread = fread(cart->ram, 1, cart->ram_length, f);
+               fclose(f);
+               if (nread != cart->ram_length) {
+                    fprintf(stderr, "RAM save file is too small!\n");
+                    goto error;
+               }
+
+               printf("Loaded RAM save from '%s'\n", cart->save_file);
+          }
+
      }
 
      /* Success */
@@ -238,6 +303,10 @@ error:
           cart->ram = NULL;
      }
 
+     if (cart->save_file) {
+          free(cart->save_file);
+     }
+
      if (f) {
           fclose(f);
      }
@@ -245,8 +314,49 @@ error:
      die();
 }
 
+static void gb_cart_ram_save(struct gb *gb) {
+     struct gb_cart *cart = &gb->cart;
+     FILE *f;
+
+     if (cart->save_file == NULL) {
+          /* No battery backup, nothing to do */
+          return;
+     }
+
+     if (!cart->dirty_ram) {
+          /* No changes to RAM since last save, nothing to do */
+          return;
+     }
+
+     f = fopen(cart->save_file, "wb");
+     if (f == NULL) {
+          fprintf(stderr, "Can't create or open save file '%s': %s",
+                  cart->save_file, strerror(errno));
+          die();
+     }
+
+     /* Dump RAM to file */
+     if (fwrite(cart->ram, 1, cart->ram_length, f) < 0) {
+          perror("fwrite failed");
+          fclose(f);
+          die();
+     }
+
+     fflush(f);
+     fclose(f);
+
+     printf("Saved RAM\n");
+     cart->dirty_ram = false;
+}
+
 void gb_cart_unload(struct gb *gb) {
      struct gb_cart *cart = &gb->cart;
+
+     gb_cart_ram_save(gb);
+
+     if (cart->save_file) {
+          free(cart->save_file);
+     }
 
      if (cart->rom) {
           free(cart->rom);
@@ -456,4 +566,5 @@ void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
      }
 
      cart->ram[ram_off] = v;
+     cart->dirty_ram = true;
 }

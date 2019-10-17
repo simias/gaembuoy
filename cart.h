@@ -37,6 +37,11 @@ struct gb_cart {
       * configuration otherwise it operates in 32 ROM banks/4 RAM banks
       * configuration. */
      bool mbc1_bank_ram;
+     /* If we have a battery backup we save and restore the contents of the RAM
+      * from this file */
+     char *save_file;
+     /* Dirty flag, set to true when the RAM has been written to */
+     bool dirty_ram;
 };
 
 void gb_cart_load(struct gb *gb, const char *rom_path);
