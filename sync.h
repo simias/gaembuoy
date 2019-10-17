@@ -9,6 +9,7 @@ enum gb_sync_token {
      GB_SYNC_GPU = 0,
      GB_SYNC_DMA,
      GB_SYNC_TIMER,
+     GB_SYNC_CART,
 
      GB_SYNC_NUM
 };
