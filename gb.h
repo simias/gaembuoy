@@ -20,6 +20,7 @@ struct gb;
 #include "hdma.h"
 #include "timer.h"
 #include "spu.h"
+#include "bootrom.h"
 #include "frontend.h"
 
 /* DMG CPU frequency. Super GameBoy runs slightly faster (4.295454MHz). */
@@ -41,6 +42,7 @@ struct gb {
      /* Set by the frontend when the user requested that the emulation stops */
      bool quit;
 
+     struct gb_bootrom bootrom;
      struct gb_irq irq;
      struct gb_frontend frontend;
      struct gb_sync sync;

@@ -87,6 +87,8 @@
 #define REG_OBP0        0xff48U
 /* Sprite palette 1 */
 #define REG_OBP1        0xff49U
+/* Bootrom unmapping */
+#define REG_BOOT        0xff50U
 /* Window Y position */
 #define REG_WY          0xff4aU
 /* Window X position */
@@ -139,6 +141,23 @@ static uint8_t iram_read(struct gb *gb, uint16_t off) {
 /* Read one byte from memory at `addr` */
 uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      if (addr >= ROM_BASE && addr < ROM_END) {
+          if (gb->bootrom.active) {
+               uint16_t rom_len;
+
+               if (gb->gbc) {
+                    rom_len = GB_BOOTROM_LEN_GBC;
+               } else {
+                    rom_len = GB_BOOTROM_LEN_DMG;
+               }
+
+               /* The cartridge portion between 0x100 and 0x1ff remains mapped
+                * even in GBC mode (since the bootloader needs to read it to
+                * identify the cartridge) */
+               if (addr < rom_len && (addr < 0x100 || addr >= 0x200)) {
+                    return gb->bootrom.rom[addr];
+               }
+          }
+
           return gb_cart_rom_readb(gb, addr - ROM_BASE);
      }
 
@@ -944,6 +963,14 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (gb->gbc && addr == REG_SVBK) {
           gb->iram_high_bank = val & 7;
+          return;
+     }
+
+     if (addr == REG_BOOT) {
+          if (val == 0x01) {
+               /* Unmap the bootrom */
+               gb->bootrom.active = false;
+          }
           return;
      }
 

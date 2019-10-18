@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
      gb_dma_reset(gb);
      gb_timer_reset(gb);
      gb_spu_reset(gb);
+     gb_bootrom_load(gb);
 
      gb->iram_high_bank = 1;
      gb->vram_high_bank = false;
