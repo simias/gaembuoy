@@ -18,6 +18,7 @@
 #define GB_CART_MAX_SIZE (32U * 1024 * 1024)
 
 #define GB_CART_OFF_TITLE     0x134
+#define GB_CART_OFF_GBC       0x143
 #define GB_CART_OFF_TYPE      0x147
 #define GB_CART_OFF_ROM_BANKS 0x148
 #define GB_CART_OFF_RAM_BANKS 0x149
@@ -292,6 +293,9 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
 
      /* Success */
      fclose(f);
+
+     /* See if we have a DMG or GBC game */
+     gb->gbc = (cart->rom[GB_CART_OFF_GBC] & 0x80);
 
      gb_cart_get_rom_title(gb, rom_title);
 
