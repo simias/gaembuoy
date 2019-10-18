@@ -25,6 +25,9 @@ struct gb;
 #define GB_CPU_FREQ_HZ 4194304U
 
 struct gb {
+     /* True if we're emulating a GBC, false if we're emulating a DMG */
+     bool gbc;
+
      /* Counter keeping track of how many CPU cycles have elapsed since an
       * arbitrary point in time. Used to synchronize the other devices. */
      int32_t timestamp;
