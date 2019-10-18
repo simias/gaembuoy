@@ -48,7 +48,9 @@ int main(int argc, char **argv) {
      gb_timer_reset(gb);
      gb_spu_reset(gb);
 
+     gb->iram_high_bank = 1;
      gb->quit = false;
+
      while (!gb->quit) {
           gb->frontend.refresh_input(gb);
 

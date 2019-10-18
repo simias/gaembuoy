@@ -94,6 +94,26 @@
 /* Interrupt Enable register */
 #define REG_IE          0xffffU
 
+/*
+ * GBC-only registers
+ */
+/* Internal RAM banking */
+#define REG_SVBK        0xff70U
+
+static uint8_t iram_read(struct gb *gb, uint16_t off) {
+     if (off >= 0x1000) {
+          unsigned bank = gb->iram_high_bank;
+
+          if (bank == 0) {
+               bank = 1;
+          }
+
+          off += (bank - 1) * 0x1000;
+     }
+
+     return gb->iram[off];
+}
+
 /* Read one byte from memory at `addr` */
 uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      if (addr >= ROM_BASE && addr < ROM_END) {
@@ -105,11 +125,11 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      }
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
-          return gb->iram[addr - IRAM_BASE];
+          return iram_read(gb, addr - IRAM_BASE);
      }
 
      if (addr >= IRAM_ECHO_BASE && addr < IRAM_ECHO_END) {
-          return gb->iram[addr - IRAM_ECHO_BASE];
+          return iram_read(gb, addr - IRAM_ECHO_BASE);
      }
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
@@ -316,6 +336,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_IE) {
           return gb->irq.irq_enable;
+     }
+
+     if (gb->gbc && addr == REG_SVBK) {
+          return gb->iram_high_bank | 0xf8;
      }
 
      printf("Unsupported read at address 0x%04x\n", addr);
@@ -705,6 +729,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_WX) {
           gb_gpu_sync(gb);
           gb->gpu.wx = val;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_SVBK) {
+          gb->iram_high_bank = val & 7;
           return;
      }
 
