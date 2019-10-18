@@ -44,8 +44,10 @@ struct gb {
      struct gb_dma dma;
      struct gb_timer timer;
      struct gb_spu spu;
-     /* Internal RAM */
-     uint8_t iram[0x2000];
+     /* Internal RAM: 8KiB on DMG, 32 KiB on GBC */
+     uint8_t iram[0x8000];
+     /* Always 1 on DMG, 1-7 on GBC */
+     uint8_t iram_high_bank;
      /* Zero-page RAM */
      uint8_t zram[0x7f];
      /* Video RAM */

@@ -94,6 +94,26 @@
 /* Interrupt Enable register */
 #define REG_IE          0xffffU
 
+/*
+ * GBC-only registers
+ */
+/* Internal RAM banking */
+#define REG_SVBK        0xff70U
+
+static uint16_t gb_memory_iram_off(struct gb *gb, uint16_t off) {
+     if (off >= 0x1000) {
+          unsigned bank = gb->iram_high_bank;
+
+          if (bank == 0) {
+               bank = 1;
+          }
+
+          off += (bank - 1) * 0x1000;
+     }
+
+     return off;
+}
+
 /* Read one byte from memory at `addr` */
 uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      if (addr >= ROM_BASE && addr < ROM_END) {
@@ -105,11 +125,15 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      }
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
-          return gb->iram[addr - IRAM_BASE];
+          uint16_t off = gb_memory_iram_off(gb, addr - IRAM_BASE);
+
+          return gb->iram[off];
      }
 
      if (addr >= IRAM_ECHO_BASE && addr < IRAM_ECHO_END) {
-          return gb->iram[addr - IRAM_ECHO_BASE];
+          uint16_t off = gb_memory_iram_off(gb, addr - IRAM_ECHO_BASE);
+
+          return gb->iram[off];
      }
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
@@ -318,6 +342,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb->irq.irq_enable;
      }
 
+     if (gb->gbc && addr == REG_SVBK) {
+          return gb->iram_high_bank | 0xf8;
+     }
+
      printf("Unsupported read at address 0x%04x\n", addr);
 
      return 0xff;
@@ -336,12 +364,16 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr >= IRAM_BASE && addr < IRAM_END) {
-          gb->iram[addr - IRAM_BASE] = val;
+          uint16_t off = gb_memory_iram_off(gb, addr - IRAM_BASE);
+
+          gb->iram[off] = val;
           return;
      }
 
      if (addr >= IRAM_ECHO_BASE && addr < IRAM_ECHO_END) {
-          gb->iram[addr - IRAM_ECHO_BASE] = val;
+          uint16_t off = gb_memory_iram_off(gb, addr - IRAM_ECHO_BASE);
+
+          gb->iram[off] = val;
           return;
      }
 
@@ -705,6 +737,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_WX) {
           gb_gpu_sync(gb);
           gb->gpu.wx = val;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_SVBK) {
+          gb->iram_high_bank = val & 7;
           return;
      }
 
