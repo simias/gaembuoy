@@ -14,8 +14,8 @@ struct gb_sdl_context {
      unsigned audio_buf_index;
 };
 
-static void gb_sdl_draw_line(struct gb *gb, unsigned ly,
-                             enum gb_color line[GB_LCD_WIDTH]) {
+static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
+                                 union gb_gpu_color line[GB_LCD_WIDTH]) {
      struct gb_sdl_context *ctx = gb->frontend.data;
      unsigned i;
 
@@ -27,7 +27,42 @@ static void gb_sdl_draw_line(struct gb *gb, unsigned ly,
      };
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = col_map[line[i]];
+          ctx->pixels[ly * GB_LCD_WIDTH + i] = col_map[line[i].dmg_color];
+     }
+}
+
+static uint32_t gb_sdl_5_to_8bits(uint32_t v) {
+     return (v << 3) | (v >> 2);
+}
+
+static uint32_t gb_sdl_gbc_to_xrgb8888(uint16_t c) {
+     uint32_t r = c & 0x1f;
+     uint32_t g = (c >> 5) & 0x1f;
+     uint32_t b = (c >> 10) & 0x1f;
+     uint32_t p;
+
+     /* Extend from 5 to 8 bits */
+     r = gb_sdl_5_to_8bits(r);
+     g = gb_sdl_5_to_8bits(g);
+     b = gb_sdl_5_to_8bits(b);
+
+     p = 0xff000000;
+     p |= r << 16;
+     p |= g << 8;
+     p |= b;
+
+     return p;
+}
+
+static void gb_sdl_draw_line_gbc(struct gb *gb, unsigned ly,
+                                 union gb_gpu_color line[GB_LCD_WIDTH]) {
+     struct gb_sdl_context *ctx = gb->frontend.data;
+     unsigned i;
+
+     for (i = 0; i < GB_LCD_WIDTH; i++) {
+          uint16_t c = line[i].gbc_color;
+
+          ctx->pixels[ly * GB_LCD_WIDTH + i] = gb_sdl_gbc_to_xrgb8888(c);
      }
 }
 
@@ -288,7 +323,8 @@ void gb_sdl_frontend_init(struct gb *gb) {
      /* Start audio */
      SDL_PauseAudioDevice(ctx->audio_device, 0);
 
-     gb->frontend.draw_line = gb_sdl_draw_line;
+     gb->frontend.draw_line_dmg = gb_sdl_draw_line_dmg;
+     gb->frontend.draw_line_gbc = gb_sdl_draw_line_gbc;
      gb->frontend.flip = gb_sdl_flip;
      gb->frontend.refresh_input = gb_sdl_refresh_input;
      gb->frontend.destroy = gb_sdl_destroy;
