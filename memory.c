@@ -99,6 +99,14 @@
  */
 /* VRAM banking */
 #define REG_VBK         0xff4fU
+/* BG palette address */
+#define REG_BCPS        0xff68U
+/* BG palette data */
+#define REG_BCPD        0xff69U
+/* Sprite palette address */
+#define REG_OCPS        0xff6aU
+/* Sprite palette data */
+#define REG_OCPD        0xff6bU
 /* Internal RAM banking */
 #define REG_SVBK        0xff70U
 
@@ -346,6 +354,58 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (gb->gbc && addr == REG_VBK) {
           return gb->vram_high_bank | 0xfe;
+     }
+
+     if (gb->gbc && addr == REG_BCPS) {
+          uint8_t r = 0;
+
+          r |= gb->gpu.bg_palettes.auto_increment << 7;
+          r |= gb->gpu.bg_palettes.write_index;
+
+          return r;
+     }
+
+     if (gb->gbc && addr == REG_BCPD) {
+          struct gb_color_palette *p = &gb->gpu.bg_palettes;
+          uint16_t index = p->write_index;
+          unsigned palette = index >> 3;
+          unsigned color_index = (index >> 1) & 3;
+          bool high = index & 1;
+          uint16_t col;
+
+          col = p->colors[palette][color_index];
+
+          if (high) {
+               return col >> 8;
+          } else {
+               return col & 0xff;
+          }
+     }
+
+     if (gb->gbc && addr == REG_OCPS) {
+          uint8_t r = 0;
+
+          r |= gb->gpu.sprite_palettes.auto_increment << 7;
+          r |= gb->gpu.sprite_palettes.write_index;
+
+          return r;
+     }
+
+     if (gb->gbc && addr == REG_OCPD) {
+          struct gb_color_palette *p = &gb->gpu.sprite_palettes;
+          uint16_t index = p->write_index;
+          unsigned palette = index >> 3;
+          unsigned color_index = (index >> 1) & 3;
+          bool high = index & 1;
+          uint16_t col;
+
+          col = p->colors[palette][color_index];
+
+          if (high) {
+               return col >> 8;
+          } else {
+               return col & 0xff;
+          }
      }
 
      if (gb->gbc && addr == REG_SVBK) {
@@ -748,6 +808,72 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (gb->gbc && addr == REG_VBK) {
           gb->vram_high_bank = val & 1;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_BCPS) {
+          gb->gpu.bg_palettes.auto_increment = val & 0x80;
+          gb->gpu.bg_palettes.write_index = val & 0x3f;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_BCPD) {
+          struct gb_color_palette *p = &gb->gpu.bg_palettes;
+          uint16_t index = p->write_index;
+          unsigned palette = index >> 3;
+          unsigned color_index = (index >> 1) & 3;
+          bool high = index & 1;
+          uint16_t col;
+
+          col = p->colors[palette][color_index];
+
+          if (high) {
+               col &= 0xff;
+               col |= val << 8;
+          } else {
+               col &= 0xff00;
+               col |= val;
+          }
+
+          p->colors[palette][color_index] = col;
+
+          if (p->auto_increment) {
+               p->write_index = (p->write_index + 1) & 0x3f;
+          }
+
+          return;
+     }
+
+     if (gb->gbc && addr == REG_OCPS) {
+          gb->gpu.sprite_palettes.auto_increment = val & 0x80;
+          gb->gpu.sprite_palettes.write_index = val & 0x3f;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_OCPD) {
+          struct gb_color_palette *p = &gb->gpu.sprite_palettes;
+          uint16_t index = p->write_index;
+          unsigned palette = index >> 3;
+          unsigned color_index = (index >> 1) & 3;
+          bool high = index & 1;
+          uint16_t col;
+
+          col = p->colors[palette][color_index];
+
+          if (high) {
+               col &= 0xff;
+               col |= val << 8;
+          } else {
+               col &= 0xff00;
+               col |= val;
+          }
+
+          p->colors[palette][color_index] = col;
+
+          if (p->auto_increment) {
+               p->write_index = (p->write_index + 1) & 0x3f;
+          }
+
           return;
      }
 
