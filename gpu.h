@@ -4,6 +4,16 @@
 /* The GPU supports up to 40 sprites concurrently */
 #define GB_GPU_MAX_SPRITES 40
 
+/* Palette used by the GBC */
+struct gb_color_palette {
+     /* 8 palettes of 4 colors. Each color is stored as xBGR 1555 */
+     uint16_t colors[8][4];
+     /* Index of the next write in this palette */
+     uint8_t write_index;
+     /* If true `write_index` auto-increments after a write */
+     bool auto_increment;
+};
+
 struct gb_gpu {
      /* Background scroll X */
      uint8_t scx;
@@ -52,6 +62,10 @@ struct gb_gpu {
      /* Object Attribute Memory (sprite configuration). Each sprite uses 4 bytes
       * for attributes. */
      uint8_t oam[GB_GPU_MAX_SPRITES * 4];
+     /* GBC-only: background color palettes */
+     struct gb_color_palette bg_palettes;
+     /* GBC-only: sprite color palettes */
+     struct gb_color_palette sprite_palettes;
 };
 
 void gb_gpu_reset(struct gb *gb);
