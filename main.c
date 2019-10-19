@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
      gb_spu_reset(gb);
 
      gb->iram_high_bank = 1;
+     gb->vram_high_bank = false;
      gb->quit = false;
 
      while (!gb->quit) {
