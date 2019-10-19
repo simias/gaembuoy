@@ -102,7 +102,8 @@ struct gb_gpu_pixel {
 static enum gb_color gb_gpu_get_tile_color(struct gb *gb,
                                            uint8_t tile_index,
                                            uint8_t x, uint8_t y,
-                                           bool use_sprite_ts) {
+                                           bool use_sprite_ts,
+                                           bool use_high_bank) {
      unsigned tile_addr;
      /* Each tile is 8x8 pixels and stores 2bits per pixels for a total of
       * 16bytes per tile */
@@ -120,6 +121,11 @@ static enum gb_color gb_gpu_get_tile_color(struct gb *gb,
            * values above 127 index *back* into the second half of the sprite
            * tile set, effectively sharing the region between the two sets */
           tile_addr = 0x1000 + (int8_t)tile_index * tile_size;
+     }
+
+     /* GBC-only: use the high bank if requested */
+     if (use_high_bank) {
+          tile_addr += 0x2000;
      }
 
      /* Pixel data is stored "backwards" in VRAM: the leftmost pixel (x = 0) is
@@ -156,6 +162,7 @@ static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
      /* Index of the tile entry in the tile set */
      uint8_t tile_index;
      struct gb_gpu_pixel pix;
+     bool use_sprite_ts = gpu->bg_window_use_sprite_ts;
 
      /* There are two independent tile maps the game can use */
      if (use_high_tm) {
@@ -172,15 +179,39 @@ static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
      tile_index = gb->vram[tm_addr];
 
      if (gb->gbc) {
-          // XXX TODO
-          pix.color.gbc_color = 0xabcd;
-          pix.opaque = true;
-     } else {
-          bool use_sprite_ts = gpu->bg_window_use_sprite_ts;
+          /* On the GBC we have additional attributes in the 2nd VRAM bank */
+          uint8_t attrs = gb->vram[tm_addr + 0x2000];
+          bool priority = attrs & 0x80;
+          bool y_flip = attrs & 0x40;
+          bool x_flip = attrs & 0x20;
+          bool high_bank = attrs & 0x08;
+          uint8_t palette = attrs & 0x07;
+          enum gb_color col;
 
+          /* XXX TODO: Handle priority */
+          (void)priority;
+
+          if (x_flip) {
+               tile_x = 7 - tile_x;
+          }
+
+          if (y_flip) {
+               tile_y = 7 - tile_y;
+          }
+
+          col = gb_gpu_get_tile_color(gb, tile_index,
+                                      tile_x, tile_y,
+                                      use_sprite_ts,
+                                      high_bank);
+
+          pix.opaque = col != GB_COL_WHITE;
+
+          pix.color.gbc_color = gpu->bg_palettes.colors[palette][col];
+     } else {
           pix.color.dmg_color = gb_gpu_get_tile_color(gb, tile_index,
                                                       tile_x, tile_y,
-                                                      use_sprite_ts);
+                                                      use_sprite_ts,
+                                                      false);
           pix.opaque = pix.color.dmg_color != GB_COL_WHITE;
 
           pix.color.dmg_color = gb_gpu_palette_transform(pix.color.dmg_color,
@@ -379,7 +410,7 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
 
           col = gb_gpu_get_tile_color(gb, tile_index,
                                       sprite_x, sprite_y,
-                                      true);
+                                      true, false);
 
           /* White pixel color (pre-palette) denotes a transparent pixel */
           if (col == GB_COL_WHITE) {
