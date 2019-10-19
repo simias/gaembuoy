@@ -27,6 +27,14 @@ void gb_cpu_reset(struct gb *gb) {
      /* XXX For the time being we don't emulate the BOOTROM so we start the
       * execution just past it */
      cpu->pc = 0x100;
+
+     if (gb->gbc) {
+          /* In GBC mode the boot ROM sets A to 0x11 before starting the game.
+           * The game can use this to detect whether it's running on DMG or GBC.
+           */
+          cpu->a = 0x11;
+     }
+
 }
 
 static inline void gb_cpu_clock_tick(struct gb *gb, int32_t cycles) {
