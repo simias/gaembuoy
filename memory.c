@@ -97,6 +97,8 @@
 /*
  * GBC-only registers
  */
+/* VRAM banking */
+#define REG_VBK         0xff4fU
 /* Internal RAM banking */
 #define REG_SVBK        0xff70U
 
@@ -133,7 +135,11 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      }
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
-          return gb->vram[addr - VRAM_BASE];
+          uint16_t off = addr - VRAM_BASE;
+
+          off += 0x2000 * gb->vram_high_bank;
+
+          return gb->vram[off];
      }
 
      if (addr >= CRAM_BASE && addr < CRAM_END) {
@@ -338,6 +344,10 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
           return gb->irq.irq_enable;
      }
 
+     if (gb->gbc && addr == REG_VBK) {
+          return gb->vram_high_bank | 0xfe;
+     }
+
      if (gb->gbc && addr == REG_SVBK) {
           return gb->iram_high_bank | 0xf8;
      }
@@ -370,8 +380,12 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr >= VRAM_BASE && addr < VRAM_END) {
+          uint16_t off = addr - VRAM_BASE;
+
+          off += 0x2000 * gb->vram_high_bank;
+
           gb_gpu_sync(gb);
-          gb->vram[addr - VRAM_BASE] = val;
+          gb->vram[off] = val;
           return;
      }
 
@@ -729,6 +743,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_WX) {
           gb_gpu_sync(gb);
           gb->gpu.wx = val;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_VBK) {
+          gb->vram_high_bank = val & 1;
           return;
      }
 
