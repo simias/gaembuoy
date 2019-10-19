@@ -9,7 +9,6 @@
 
 struct gb;
 
-#include "frontend.h"
 #include "sync.h"
 #include "irq.h"
 #include "cpu.h"
@@ -20,6 +19,7 @@ struct gb;
 #include "dma.h"
 #include "timer.h"
 #include "spu.h"
+#include "frontend.h"
 
 /* DMG CPU frequency. Super GameBoy runs slightly faster (4.295454MHz). */
 #define GB_CPU_FREQ_HZ 4194304U

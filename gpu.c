@@ -94,10 +94,11 @@ static uint8_t gb_gpu_get_mode(struct gb *gb) {
 }
 
 struct gb_gpu_pixel {
-     enum gb_color color;
+     union gb_gpu_color color;
      bool opaque;
 };
 
+/* Get a pixel value from the tileset, original DMG model version */
 static enum gb_color gb_gpu_get_tile_color(struct gb *gb,
                                            uint8_t tile_index,
                                            uint8_t x, uint8_t y,
@@ -170,11 +171,21 @@ static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
      /* Look up the tile map entry in VRAM */
      tile_index = gb->vram[tm_addr];
 
-     pix.color = gb_gpu_get_tile_color(gb, tile_index, tile_x, tile_y,
-                                       gpu->bg_window_use_sprite_ts);
-     pix.opaque = pix.color != GB_COL_WHITE;
+     if (gb->gbc) {
+          // XXX TODO
+          pix.color.gbc_color = 0xabcd;
+          pix.opaque = true;
+     } else {
+          bool use_sprite_ts = gpu->bg_window_use_sprite_ts;
 
-     pix.color = gb_gpu_palette_transform(pix.color, gpu->bgp);
+          pix.color.dmg_color = gb_gpu_get_tile_color(gb, tile_index,
+                                                      tile_x, tile_y,
+                                                      use_sprite_ts);
+          pix.opaque = pix.color.dmg_color != GB_COL_WHITE;
+
+          pix.color.dmg_color = gb_gpu_palette_transform(pix.color.dmg_color,
+                                                         gpu->bgp);
+     }
 
      return pix;
 }
@@ -331,7 +342,6 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
      unsigned sprite_flip_height;
      uint8_t tile_index;
      uint8_t palette;
-     enum gb_color col;
 
      if (sprite->background && p->opaque) {
           /* Sprite is behind the background layer and the background pixel is
@@ -360,21 +370,31 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
           sprite_y = sprite_flip_height - sprite_y;
      }
 
-     col = gb_gpu_get_tile_color(gb, tile_index, sprite_x, sprite_y, true);
-
-     /* White pixel color (pre-palette) denotes a transparent pixel */
-     if (col == GB_COL_WHITE) {
-          return false;
-     }
-
-     if (sprite->use_obp1) {
-          palette = gpu->obp1;
+     if (gb->gbc) {
+          // XXX TODO
+          p->color.gbc_color = 0x1234;
+          return true;
      } else {
-          palette = gpu->obp0;
-     }
+          enum gb_color col;
 
-     p->color = gb_gpu_palette_transform(col, palette);
-     return true;
+          col = gb_gpu_get_tile_color(gb, tile_index,
+                                      sprite_x, sprite_y,
+                                      true);
+
+          /* White pixel color (pre-palette) denotes a transparent pixel */
+          if (col == GB_COL_WHITE) {
+               return false;
+          }
+
+          if (sprite->use_obp1) {
+               palette = gpu->obp1;
+          } else {
+               palette = gpu->obp0;
+          }
+
+          p->color.dmg_color = gb_gpu_palette_transform(col, palette);
+          return true;
+     }
 }
 
 /* Returns true if the given screen coordinates lie within the window */
@@ -387,7 +407,7 @@ static bool gb_gpu_pix_in_window(struct gb *gb, unsigned x, unsigned y) {
 
 static void gb_gpu_draw_cur_line(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
-     enum gb_color line[GB_LCD_WIDTH];
+     union gb_gpu_color line[GB_LCD_WIDTH];
      /* We force a "dummy" out-of-frame sprite at the end to avoid checking for
       * bounds while we draw the line */
      struct gb_sprite line_sprites[GB_GPU_LINE_SPRITES + 1];
@@ -398,7 +418,7 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
 
      for (x = 0; x < GB_LCD_WIDTH; x++) {
           struct gb_gpu_pixel p = {
-               .color = GB_COL_WHITE,
+               .color.dmg_color = GB_COL_WHITE,
                .opaque = false
           };
           struct gb_sprite s;
@@ -435,7 +455,11 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
           line[x] = p.color;
      }
 
-     gb->frontend.draw_line(gb, gpu->ly, line);
+     if (gb->gbc) {
+          gb->frontend.draw_line_gbc(gb, gpu->ly, line);
+     } else {
+          gb->frontend.draw_line_dmg(gb, gpu->ly, line);
+     }
 }
 
 void gb_gpu_sync(struct gb *gb) {
@@ -591,16 +615,16 @@ void gb_gpu_set_lcdc(struct gb *gb, uint8_t lcdc) {
           gpu->master_enable = master_enable;
 
           if (master_enable == false) {
-               enum gb_color line[GB_LCD_WIDTH];
+               union gb_gpu_color line[GB_LCD_WIDTH];
                unsigned i;
 
                /* Clear the screen */
                for (i = 0; i < GB_LCD_WIDTH; i++) {
-                    line[i] = GB_COL_WHITE;
+                    line[i].dmg_color = GB_COL_WHITE;
                }
 
                for (i = 0; i < GB_LCD_HEIGHT; i++) {
-                    gb->frontend.draw_line(gb, i, line);
+                    gb->frontend.draw_line_dmg(gb, i, line);
                }
 
                gpu->ly = 0;
