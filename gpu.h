@@ -4,6 +4,23 @@
 /* The GPU supports up to 40 sprites concurrently */
 #define GB_GPU_MAX_SPRITES 40
 
+enum gb_color {
+     GB_COL_WHITE,
+     GB_COL_LIGHTGREY,
+     GB_COL_DARKGREY,
+     GB_COL_BLACK
+};
+
+#define GB_LCD_WIDTH  160
+#define GB_LCD_HEIGHT 144
+
+union gb_gpu_color {
+     /* DMG color: 4 shades */
+     enum gb_color dmg_color;
+     /* GBC color: xRGB 1555 */
+     uint16_t gbc_color;
+};
+
 /* Palette used by the GBC */
 struct gb_color_palette {
      /* 8 palettes of 4 colors. Each color is stored as xBGR 1555 */
