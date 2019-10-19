@@ -50,8 +50,10 @@ struct gb {
      uint8_t iram_high_bank;
      /* Zero-page RAM */
      uint8_t zram[0x7f];
-     /* Video RAM */
-     uint8_t vram[0x2000];
+     /* Video RAM: 8KiB on DMG, 16KiB on GBC */
+     uint8_t vram[0x4000];
+     /* Always false on DMG */
+     bool    vram_high_bank;
 };
 
 static inline void die(void) {
