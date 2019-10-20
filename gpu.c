@@ -257,8 +257,14 @@ struct gb_sprite {
      bool x_flip;
      bool y_flip;
 
-     /* True if sprite uses palette obp1, otherwise use obp0 */
+     /* GB-only: true if sprite uses palette obp1, otherwise use obp0 */
      bool use_obp1;
+
+     /* GBC-only: if true the tile is in the high bank */
+     bool high_bank;
+
+     /* GBC-only: which palette to use */
+     uint8_t palette;
 };
 
 static struct gb_sprite gb_get_oam_sprite(struct gb *gb, unsigned index) {
@@ -283,6 +289,14 @@ static struct gb_sprite gb_get_oam_sprite(struct gb *gb, unsigned index) {
      s.x_flip = flags & 0x20;
      s.y_flip = flags & 0x40;
      s.background = flags & 0x80;
+
+     if (gb->gbc) {
+          s.high_bank = flags & 0x08;
+          s.palette = flags & 0x07;
+     } else {
+          s.high_bank = false;
+          s.palette = 0;
+     }
 
      return s;
 }
@@ -372,7 +386,7 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
      unsigned sprite_y;
      unsigned sprite_flip_height;
      uint8_t tile_index;
-     uint8_t palette;
+     enum gb_color col;
 
      if (sprite->background && p->opaque) {
           /* Sprite is behind the background layer and the background pixel is
@@ -401,21 +415,20 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
           sprite_y = sprite_flip_height - sprite_y;
      }
 
+     col = gb_gpu_get_tile_color(gb, tile_index,
+                                 sprite_x, sprite_y,
+                                 true, sprite->high_bank);
+
+     /* White pixel color (pre-palette) denotes a transparent pixel */
+     if (col == GB_COL_WHITE) {
+          return false;
+     }
+
      if (gb->gbc) {
-          // XXX TODO
-          p->color.gbc_color = 0x1234;
-          return true;
+          p->color.gbc_color =
+               gpu->sprite_palettes.colors[sprite->palette][col];
      } else {
-          enum gb_color col;
-
-          col = gb_gpu_get_tile_color(gb, tile_index,
-                                      sprite_x, sprite_y,
-                                      true, false);
-
-          /* White pixel color (pre-palette) denotes a transparent pixel */
-          if (col == GB_COL_WHITE) {
-               return false;
-          }
+          uint8_t palette;
 
           if (sprite->use_obp1) {
                palette = gpu->obp1;
@@ -424,8 +437,9 @@ static bool gb_gpu_get_sprite_col(struct gb *gb,
           }
 
           p->color.dmg_color = gb_gpu_palette_transform(col, palette);
-          return true;
      }
+
+     return true;
 }
 
 /* Returns true if the given screen coordinates lie within the window */
