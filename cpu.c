@@ -38,7 +38,7 @@ void gb_cpu_reset(struct gb *gb) {
 }
 
 static inline void gb_cpu_clock_tick(struct gb *gb, int32_t cycles) {
-     gb->timestamp += cycles;
+     gb->timestamp += cycles >> gb->double_speed;
 
      if (gb->timestamp >= gb->sync.first_event) {
           /* We have a device sync pending */
@@ -211,6 +211,26 @@ static void gb_i_ei(struct gb *gb) {
 }
 
 static void gb_i_stop(struct gb *gb) {
+     if (gb->speed_switch_pending) {
+          /* If a speed change has been requested it is executed on STOP and the
+           * execution resumes normally after that. */
+          /* XXX: this should take about 16ms when switching to double-speed
+           * mode and about 32ms when switching back to normal mode */
+
+          /* Clock speed is going to change, synchronize the relevant devices
+           * with the current clock speed */
+          gb_timer_sync(gb);
+          gb_dma_sync(gb);
+
+          gb->double_speed = !gb->double_speed;
+
+          /* Re-sync with new prediction */
+          gb_timer_sync(gb);
+          gb_dma_sync(gb);
+
+          return;
+     }
+
      // XXX TODO: stop CPU and screen until button press
      fprintf(stderr, "Implement STOP!\n");
      die();
@@ -2348,7 +2368,7 @@ int32_t gb_cpu_run_cycles(struct gb *gb, int32_t cycles) {
                     skip_cycles = gb->sync.first_event - gb->timestamp;
                }
 
-               gb_cpu_clock_tick(gb, skip_cycles);
+               gb_cpu_clock_tick(gb, skip_cycles << gb->double_speed);
 
                /* See if any event needs to run. This may trigger an IRQ which
                 * will un-halt the CPU in the next iteration */

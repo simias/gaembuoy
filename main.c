@@ -51,6 +51,8 @@ int main(int argc, char **argv) {
      gb->iram_high_bank = 1;
      gb->vram_high_bank = false;
      gb->quit = false;
+     gb->double_speed = false;
+     gb->speed_switch_pending = false;
 
      while (!gb->quit) {
           gb->frontend.refresh_input(gb);

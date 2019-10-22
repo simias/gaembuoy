@@ -36,6 +36,9 @@ void gb_timer_sync(struct gb *gb) {
           die();
      }
 
+     /* Timer runs twice as fast in double-speed mode */
+     elapsed <<= gb->double_speed;
+
      /* Number of counter ticks since last sync */
      count = (elapsed + timer->divider_counter % div) / div;
 
@@ -68,6 +71,9 @@ void gb_timer_sync(struct gb *gb) {
      next = (0x100 - count) * div;
      /* Subtract the remainder in the divider */
      next -= timer->divider_counter % div;
+
+     next >>= gb->double_speed;
+
      gb_sync_next(gb, GB_SYNC_TIMER, next);
 }
 

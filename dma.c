@@ -21,9 +21,10 @@ void gb_dma_sync(struct gb *gb) {
           return;
      }
 
-     /* CPU always increments the counter in multiples of 4 cycles so we know
-      * for sure that there won't be any remainder here. */
-     length = elapsed / 4;
+     /* CPU always increments the counter in multiples of 4 cycles (2 in
+      * double-speed mode) so we know for sure that there won't be any remainder
+      * here. */
+     length = elapsed / (4 >> gb->double_speed);
 
      while (length && dma->position < GB_DMA_LENGTH_BYTES) {
           uint32_t b = gb_memory_readb(gb, dma->source + dma->position);
@@ -39,8 +40,9 @@ void gb_dma_sync(struct gb *gb) {
           dma->running = false;
           gb_sync_next(gb, GB_SYNC_DMA, GB_SYNC_NEVER);
      } else {
-          /* The DMA copies one byte ever 4 cycles */
-          gb_sync_next(gb, GB_SYNC_DMA, 4);
+          /* The DMA copies one byte ever 4 cycles (2 cycles in double-speed
+           * mode) */
+          gb_sync_next(gb, GB_SYNC_DMA, 4 >> gb->double_speed);
      }
 }
 
