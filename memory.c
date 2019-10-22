@@ -97,6 +97,8 @@
 /*
  * GBC-only registers
  */
+/* Speed control */
+#define REG_KEY1        0xff4dU
 /* VRAM banking */
 #define REG_VBK         0xff4fU
 /* BG palette address */
@@ -350,6 +352,15 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (addr == REG_IE) {
           return gb->irq.irq_enable;
+     }
+
+     if (gb->gbc && addr == REG_KEY1) {
+          uint8_t r = 0;
+
+          r |= gb->double_speed << 7;
+          r |= gb->speed_switch_pending;
+
+          return r | 0x7e;
      }
 
      if (gb->gbc && addr == REG_VBK) {
@@ -803,6 +814,11 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      if (addr == REG_WX) {
           gb_gpu_sync(gb);
           gb->gpu.wx = val;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_KEY1) {
+          gb->speed_switch_pending = val & 1;
           return;
      }
 

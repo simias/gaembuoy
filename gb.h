@@ -28,6 +28,12 @@ struct gb {
      /* True if we're emulating a GBC, false if we're emulating a DMG */
      bool gbc;
 
+     /* True if a speed switch has been requested. It will take effect when a
+      * STOP operation is executed */
+     bool speed_switch_pending;
+     /* True if the GBC is running in double-speed mode */
+     bool double_speed;
+
      /* Counter keeping track of how many CPU cycles have elapsed since an
       * arbitrary point in time. Used to synchronize the other devices. */
      int32_t timestamp;
