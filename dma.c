@@ -55,7 +55,8 @@ void gb_dma_start(struct gb *gb, uint8_t source) {
      dma->source = (uint16_t)source << 8;
      dma->position = 0;
 
-     if (dma->source < 0x8000U || dma->source >= 0xe000U) {
+     /* The GBC can copy directly from the cartridge, DMG only from RAM */
+     if ((!gb->gbc && dma->source < 0x8000U) || dma->source >= 0xe000U) {
           /* The DMA can't access this memory region */
           dma->running = false;
      } else {
