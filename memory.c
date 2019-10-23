@@ -101,6 +101,16 @@
 #define REG_KEY1        0xff4dU
 /* VRAM banking */
 #define REG_VBK         0xff4fU
+/* HDMA source address high */
+#define REG_HDMA1       0xff51U
+/* HDMA source address low */
+#define REG_HDMA2       0xff52U
+/* HDMA destination address high */
+#define REG_HDMA3       0xff53U
+/* HDMA destination address low */
+#define REG_HDMA4       0xff54U
+/* HDMA length, mode and start */
+#define REG_HDMA5       0xff55U
 /* BG palette address */
 #define REG_BCPS        0xff68U
 /* BG palette data */
@@ -369,6 +379,37 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
 
      if (gb->gbc && addr == REG_VBK) {
           return gb->vram_high_bank | 0xfe;
+     }
+
+     if (gb->gbc && addr == REG_HDMA1) {
+          return gb->hdma.source >> 8;
+     }
+
+     if (gb->gbc && addr == REG_HDMA2) {
+          return gb->hdma.source & 0xff;
+     }
+
+     if (gb->gbc && addr == REG_HDMA3) {
+          return gb->hdma.destination >> 8;
+     }
+
+     if (gb->gbc && addr == REG_HDMA4) {
+          return gb->hdma.destination & 0xff;
+     }
+
+     if (gb->gbc && addr == REG_HDMA5) {
+          /* The only way the CPU can read this register and see that the HDMA
+           * is active is if it's configured to run on HBLANKs. If the HDMA is
+           * configured to run without HBLANK it copies everything at once,
+           * stopping the CPU until it's finished (and then obviously the CPU
+           * can't read this register) */
+          bool active = gb->hdma.run_on_hblank;
+          uint8_t r = 0;
+
+          r |= (!active) << 7;
+          r |= gb->hdma.length & 0x7f;
+
+          return r;
      }
 
      if (gb->gbc && addr == REG_BCPS) {
@@ -832,6 +873,45 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (gb->gbc && addr == REG_VBK) {
           gb->vram_high_bank = val & 1;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_HDMA1) {
+          gb->hdma.source &= 0xff;
+          gb->hdma.source |= (val << 8);
+          return;
+     }
+
+     if (gb->gbc && addr == REG_HDMA2) {
+          gb->hdma.source &= 0xff00;
+          gb->hdma.source |= val;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_HDMA3) {
+          gb->hdma.destination &= 0xff;
+          gb->hdma.destination |= (val << 8);
+          return;
+     }
+
+     if (gb->gbc && addr == REG_HDMA4) {
+          gb->hdma.destination &= 0xff00;
+          gb->hdma.destination |= val;
+          return;
+     }
+
+     if (gb->gbc && addr == REG_HDMA5) {
+          bool run_on_hblank = val & 0x80;
+
+          gb->hdma.length = val & 0x7f;
+
+          if (!run_on_hblank && gb->hdma.run_on_hblank) {
+               /* This stops the current transfer */
+               gb->hdma.run_on_hblank = false;
+          } else {
+               gb_hdma_start(gb, run_on_hblank);
+          }
+
           return;
      }
 
