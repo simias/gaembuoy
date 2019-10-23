@@ -17,6 +17,7 @@ struct gb;
 #include "gpu.h"
 #include "input.h"
 #include "dma.h"
+#include "hdma.h"
 #include "timer.h"
 #include "spu.h"
 #include "frontend.h"
@@ -48,6 +49,7 @@ struct gb {
      struct gb_gpu gpu;
      struct gb_input input;
      struct gb_dma dma;
+     struct gb_hdma hdma;
      struct gb_timer timer;
      struct gb_spu spu;
      /* Internal RAM: 8KiB on DMG, 32 KiB on GBC */
