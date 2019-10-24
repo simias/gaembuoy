@@ -2,6 +2,8 @@
 #include <assert.h>
 #include "gb.h"
 
+#define UPSCALE_FACTOR 4
+
 struct gb_sdl_context {
      SDL_Window *window;
      SDL_Renderer *renderer;
@@ -9,7 +11,7 @@ struct gb_sdl_context {
      SDL_GameController *controller;
      SDL_AudioSpec audio_spec;
      SDL_AudioDeviceID audio_device;
-     uint32_t pixels[GB_LCD_WIDTH * GB_LCD_HEIGHT];
+     uint32_t pixels[GB_LCD_WIDTH * GB_LCD_HEIGHT * UPSCALE_FACTOR * UPSCALE_FACTOR];
      /* Index of the next audio buffer we want to play */
      unsigned audio_buf_index;
 };
@@ -18,6 +20,8 @@ static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
                                  union gb_gpu_color line[GB_LCD_WIDTH]) {
      struct gb_sdl_context *ctx = gb->frontend.data;
      unsigned i;
+     unsigned x;
+     unsigned y;
 
      static const uint32_t col_map[4] = {
           [GB_COL_WHITE]     = 0xff75a32c,
@@ -27,7 +31,11 @@ static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
      };
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = col_map[line[i].dmg_color];
+          for (y = 0; y < UPSCALE_FACTOR; y++) {
+               for (x = 0; x < UPSCALE_FACTOR; x++) {
+                    ctx->pixels[(ly + y) * GB_LCD_WIDTH * UPSCALE_FACTOR + i + x] = col_map[line[i].dmg_color];
+               }
+          }
      }
 }
 
@@ -58,11 +66,17 @@ static void gb_sdl_draw_line_gbc(struct gb *gb, unsigned ly,
                                  union gb_gpu_color line[GB_LCD_WIDTH]) {
      struct gb_sdl_context *ctx = gb->frontend.data;
      unsigned i;
+     unsigned x;
+     unsigned y;
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
           uint16_t c = line[i].gbc_color;
 
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = gb_sdl_gbc_to_xrgb8888(c);
+          for (y = 0; y < UPSCALE_FACTOR; y++) {
+               for (x = 0; x < UPSCALE_FACTOR; x++) {
+                    ctx->pixels[(ly + y) * GB_LCD_WIDTH * UPSCALE_FACTOR + i + x] = gb_sdl_gbc_to_xrgb8888(c);
+               }
+          }
      }
 }
 
@@ -220,7 +234,7 @@ static void gb_sdl_flip(struct gb *gb) {
 
      /* Copy pixels to the canvas texture */
      SDL_UpdateTexture(ctx->canvas, NULL, ctx->pixels,
-                       GB_LCD_WIDTH * sizeof(ctx->pixels[0]));
+                       GB_LCD_WIDTH * UPSCALE_FACTOR * sizeof(ctx->pixels[0]));
 
      /* Render the canvas */
      SDL_RenderCopy(ctx->renderer, ctx->canvas, NULL, NULL);
@@ -290,7 +304,7 @@ void gb_sdl_frontend_init(struct gb *gb) {
           die();
      }
 
-     if (SDL_CreateWindowAndRenderer(GB_LCD_WIDTH, GB_LCD_HEIGHT,
+     if (SDL_CreateWindowAndRenderer(GB_LCD_WIDTH * UPSCALE_FACTOR, GB_LCD_HEIGHT * UPSCALE_FACTOR,
                                      0, &ctx->window, &ctx->renderer) < 0) {
           fprintf(stderr, "SDL_CreateWindowAndRenderer failed: %s\n",
                   SDL_GetError());
