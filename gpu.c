@@ -509,6 +509,7 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
 
 void gb_gpu_sync(struct gb *gb) {
      struct gb_gpu *gpu = &gb->gpu;
+     struct gb_hdma *hdma = &gb->hdma;
      int32_t elapsed = gb_sync_resync(gb, GB_SYNC_GPU);
      /* Number of cycles needed to finish the current line */
      uint16_t line_remaining = HTOTAL - gpu->line_pos;
@@ -537,6 +538,10 @@ void gb_gpu_sync(struct gb *gb) {
                     if (gpu->iten_mode0) {
                          gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
                     }
+
+                    if (hdma->run_on_hblank) {
+                         gb_hdma_hblank(gb);
+                    }
                }
           } else {
                /* We reached the end of this line */
@@ -550,6 +555,10 @@ void gb_gpu_sync(struct gb *gb) {
 
                     if (gpu->iten_mode0) {
                          gb_irq_trigger(gb, GB_IRQ_LCD_STAT);
+                    }
+
+                    if (hdma->run_on_hblank) {
+                         gb_hdma_hblank(gb);
                     }
                }
 
@@ -590,12 +599,13 @@ void gb_gpu_sync(struct gb *gb) {
      /* By default we force a sync at the end of the current line */
      next_event = line_remaining;
 
-     if (gpu->iten_mode0 && gb_gpu_get_mode(gb) >= 2) {
-          /* Mode 0 IRQ has been requested and we're currently in Mode 2 or 3
-           * (both occurring before mode 0 on a line). In this case we force a
-           * synchronization before the end of the line, at the start of the
-           * mode 0 sequence. If it's not clear look at the comment at the top
-           * of this file describing the GPU timings and the various modes. */
+     if ((gpu->iten_mode0 || hdma->run_on_hblank) && gb_gpu_get_mode(gb) >= 2) {
+          /* Mode 0 IRQ has been requested or the HDMA needs to run on next
+           * HBLANK and we're currently in Mode 2 or 3 (both occurring before
+           * mode 0 on a line). In this case we force a synchronization before
+           * the end of the line, at the start of the mode 0 sequence. If it's
+           * not clear look at the comment at the top of this file describing
+           * the GPU timings and the various modes. */
           next_event -= MODE_0_CYCLES;
      }
 

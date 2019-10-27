@@ -16,5 +16,6 @@ struct gb_hdma {
 };
 
 void gb_hdma_start(struct gb *gb, bool hblank);
+void gb_hdma_hblank(struct gb *gb);
 
 #endif /* _GB_HDMA_H_ */
