@@ -5,6 +5,9 @@ static void gb_hdma_copy(struct gb *gb, uint16_t len) {
      uint16_t src = hdma->source;
      uint16_t dst = hdma->destination;
 
+     /* Copy takes about 2 cycles per byte */
+     gb->timestamp += len * 2;
+
      while (len--) {
           uint16_t vram_addr;
           uint8_t v;

@@ -47,26 +47,33 @@ void gb_sync_next(struct gb *gb, enum gb_sync_token token, int32_t cycles) {
 
 void gb_sync_check_events(struct gb *gb) {
      struct gb_sync *sync = &gb->sync;
-     int32_t ts = gb->timestamp;
 
-     if (ts >= sync->next_event[GB_SYNC_GPU]) {
-          gb_gpu_sync(gb);
-     }
+     /* It's possible for an event to actually "freeze" the CPU and increase the
+      * timestamp counter (in particular the HDMA running on HSYNC). Therefore
+      * we have to recheck for a potential event in a loop to make sure we only
+      * return control to the caller when all events have been processed. */
+     while (gb->timestamp >= gb->sync.first_event) {
+          int32_t ts = gb->timestamp;
 
-     if (ts >= sync->next_event[GB_SYNC_DMA]) {
-          gb_dma_sync(gb);
-     }
+          if (ts >= sync->next_event[GB_SYNC_GPU]) {
+               gb_gpu_sync(gb);
+          }
 
-     if (ts >= sync->next_event[GB_SYNC_TIMER]) {
-          gb_timer_sync(gb);
-     }
+          if (ts >= sync->next_event[GB_SYNC_DMA]) {
+               gb_dma_sync(gb);
+          }
 
-     if (ts >= sync->next_event[GB_SYNC_SPU]) {
-          gb_spu_sync(gb);
-     }
+          if (ts >= sync->next_event[GB_SYNC_TIMER]) {
+               gb_timer_sync(gb);
+          }
 
-     if (ts >= sync->next_event[GB_SYNC_CART]) {
-          gb_cart_sync(gb);
+          if (ts >= sync->next_event[GB_SYNC_SPU]) {
+               gb_spu_sync(gb);
+          }
+
+          if (ts >= sync->next_event[GB_SYNC_CART]) {
+               gb_cart_sync(gb);
+          }
      }
 }
 
