@@ -884,7 +884,8 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (gb->gbc && addr == REG_HDMA2) {
           gb->hdma.source &= 0xff00;
-          gb->hdma.source |= val;
+          /* Low 4 bits are ignored */
+          gb->hdma.source |= val & 0xf0;
           return;
      }
 
@@ -896,7 +897,9 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (gb->gbc && addr == REG_HDMA4) {
           gb->hdma.destination &= 0xff00;
-          gb->hdma.destination |= val;
+          /* Low 4 bits are ignored (causes glitches in Oracle of Ages
+           * otherwise) */
+          gb->hdma.destination |= val & 0xf0;
           return;
      }
 
