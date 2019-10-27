@@ -52,16 +52,10 @@ void gb_timer_sync(struct gb *gb) {
      }
 
      count += timer->counter;
-     if (count > 0xff) {
-          if (count > 0x100) {
-               /* Something is wrong, we've missed the target. That means that
-                * the gb_sync_next calculation below is broken somehow. */
-               fprintf(stderr, "TIMER target missed!\n");
-               die();
-          }
-
+     while (count > 0xff) {
           /* Timer saturated, reload it with the modulo */
-          count = timer->modulo;
+          count -= 0x100;
+          count += timer->modulo;
           gb_irq_trigger(gb, GB_IRQ_TIMER);
      }
 
