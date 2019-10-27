@@ -910,6 +910,7 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
           if (!run_on_hblank && gb->hdma.run_on_hblank) {
                /* This stops the current transfer */
+               gb_gpu_sync(gb);
                gb->hdma.run_on_hblank = false;
           } else {
                gb_hdma_start(gb, run_on_hblank);
