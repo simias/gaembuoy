@@ -96,6 +96,8 @@ static uint8_t gb_gpu_get_mode(struct gb *gb) {
 struct gb_gpu_pixel {
      union gb_gpu_color color;
      bool opaque;
+     /* GBC only: true if the background pixel has priority */
+     bool priority;
 };
 
 /* Get a pixel value from the tileset, original DMG model version */
@@ -188,8 +190,7 @@ static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
           uint8_t palette = attrs & 0x07;
           enum gb_color col;
 
-          /* XXX TODO: Handle priority */
-          (void)priority;
+          pix.priority = priority;
 
           if (x_flip) {
                tile_x = 7 - tile_x;
@@ -208,6 +209,8 @@ static struct gb_gpu_pixel gb_gpu_get_bg_win_pixel(struct gb *gb,
 
           pix.color.gbc_color = gpu->bg_palettes.colors[palette][col];
      } else {
+          pix.priority = false;
+
           pix.color.dmg_color = gb_gpu_get_tile_color(gb, tile_index,
                                                       tile_x, tile_y,
                                                       use_sprite_ts,
@@ -464,7 +467,8 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
      for (x = 0; x < GB_LCD_WIDTH; x++) {
           struct gb_gpu_pixel p = {
                .color.dmg_color = GB_COL_WHITE,
-               .opaque = false
+               .opaque = false,
+               .priority = false,
           };
           struct gb_sprite s;
           unsigned i;
@@ -487,13 +491,17 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
                p = gb_gpu_get_bg_pixel(gb, x, gpu->ly);
           }
 
-          /* Iterate on all sprites at this position until we find one
-           * that's visible or we run out */
-          for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
-               s = line_sprites[i];
+          /* If the background priority is set it means that the BG has the
+           * priority over any sprite at this location */
+          if (!p.priority) {
+               /* Iterate on all sprites at this position until we find one
+                * that's visible or we run out */
+               for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
+                    s = line_sprites[i];
 
-               if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
-                    break;
+                    if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
+                         break;
+                    }
                }
           }
 
