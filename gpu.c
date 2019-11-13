@@ -354,6 +354,13 @@ static void gb_gpu_get_line_sprites(
       */
      sprites[n_sprites].x = GB_LCD_WIDTH * 2;
 
+     if (gb->gbc) {
+          /* In GBC mode the sprite priority is not based on X-coordinates but
+           * simply on the index in OAM, so we already have the entries in the
+           * array in the right order (from highest priority to lowest) */
+          return;
+     }
+
      /* Finally we need to sort the sprites by x-coordinate. Careful: if the
       * sprites have the same x-coordinates the position in OAM gives the
       * priority so we must use a stable sort to maintain the ordering of values
@@ -473,17 +480,6 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
           struct gb_sprite s;
           unsigned i;
 
-          /* Figure out what is the next sprite we must display */
-          while (next_sprite < GB_GPU_LINE_SPRITES) {
-               if (line_sprites[next_sprite].x + 8 <= x ) {
-                    /* We're done displaying this sprite */
-                    next_sprite++;
-               } else {
-                    /* We have not passed this sprite yet */
-                    break;
-               }
-          }
-
           if (gpu->window_enable && gb_gpu_pix_in_window(gb, x, gpu->ly)) {
                /* Pixel lies within the window */
                p = gb_gpu_get_win_pixel(gb, x, gpu->ly);
@@ -494,13 +490,44 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
           /* If the background priority is set it means that the BG has the
            * priority over any sprite at this location */
           if (!p.priority) {
-               /* Iterate on all sprites at this position until we find one
-                * that's visible or we run out */
-               for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
-                    s = line_sprites[i];
+               if (gb->gbc) {
+                    /* In GBC the sprites aren't ordered by x-coordinate because
+                     * the location in OAM has priority, so we have to iterate
+                     * through the entire list until we find a visible sprite or
+                     * we reach the end (signaled by a x value of
+                     * GB_LCD_WIDTH * 2, see gb_gb_get_line_sprites) */
+                    for (i = 0; line_sprites[i].x < GB_LCD_WIDTH * 2; i++) {
+                         s = line_sprites[i];
 
-                    if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
-                         break;
+                         if ((int)x < s.x || (int)x >= s.x + 8) {
+                              /* Sprite is not visible at this location */
+                              continue;
+                         }
+
+                         if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
+                              break;
+                         }
+                    }
+               } else {
+                    /* Figure out what is the next sprite we must display */
+                    while (next_sprite < GB_GPU_LINE_SPRITES) {
+                         if (line_sprites[next_sprite].x + 8 <= x ) {
+                              /* We're done displaying this sprite */
+                              next_sprite++;
+                         } else {
+                              /* We have not passed this sprite yet */
+                              break;
+                         }
+                    }
+
+                    /* Iterate on all sprites at this position until we find one
+                     * that's visible or we run out */
+                    for (i = next_sprite; line_sprites[i].x <= (int)x; i++) {
+                         s = line_sprites[i];
+
+                         if (gb_gpu_get_sprite_col(gb, &s, x, gpu->ly, &p)) {
+                              break;
+                         }
                     }
                }
           }
