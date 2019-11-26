@@ -301,9 +301,8 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
                     goto error;
                }
 
-               /* XXX load RTC info */
                if (cart->has_rtc) {
-                    gb_rtc_init(gb);
+                    gb_rtc_load(gb, f);
                }
 
                fclose(f);
@@ -376,14 +375,18 @@ static void gb_cart_ram_save(struct gb *gb) {
           die();
      }
 
-     /* Dump RAM to file */
-     if (fwrite(cart->ram, 1, cart->ram_length, f) < 0) {
-          perror("fwrite failed");
-          fclose(f);
-          die();
+     if (cart->ram_length > 0) {
+          /* Dump RAM to file */
+          if (fwrite(cart->ram, 1, cart->ram_length, f) < 0) {
+               perror("fwrite failed");
+               fclose(f);
+               die();
+          }
      }
 
-     /* XXX dump RTC when necessary */
+     if (cart->has_rtc) {
+          gb_rtc_dump(gb, f);
+     }
 
      fflush(f);
      fclose(f);

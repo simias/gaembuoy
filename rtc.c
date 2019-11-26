@@ -167,3 +167,73 @@ void gb_rtc_write(struct gb *gb, unsigned r, uint8_t v) {
 
      gb_rtc_latch_date(gb, &date);
 }
+
+static void gb_dump_u8(FILE *f, uint8_t v) {
+     if (fwrite(&v, 1, 1, f) < 0) {
+          perror("fwrite failed");
+          die();
+     }
+}
+
+static uint8_t gb_load_u8(FILE *f) {
+     uint8_t v;
+
+     if (fread(&v, 1, 1, f) < 1) {
+          fprintf(stderr, "Failed to load RTC state\n");
+          return 0;
+     }
+
+     return v;
+}
+
+static void gb_dump_u64(FILE *f, uint64_t v) {
+     gb_dump_u8(f, v >> 56);
+     gb_dump_u8(f, v >> 48);
+     gb_dump_u8(f, v >> 40);
+     gb_dump_u8(f, v >> 32);
+     gb_dump_u8(f, v >> 24);
+     gb_dump_u8(f, v >> 16);
+     gb_dump_u8(f, v >> 8);
+     gb_dump_u8(f, v);
+}
+
+static uint64_t gb_load_u64(FILE *f) {
+     uint64_t v = 0;
+
+     v |= ((uint64_t)gb_load_u8(f)) << 56;
+     v |= ((uint64_t)gb_load_u8(f)) << 48;
+     v |= ((uint64_t)gb_load_u8(f)) << 40;
+     v |= ((uint64_t)gb_load_u8(f)) << 32;
+     v |= ((uint64_t)gb_load_u8(f)) << 24;
+     v |= ((uint64_t)gb_load_u8(f)) << 16;
+     v |= ((uint64_t)gb_load_u8(f)) << 8;
+     v |= ((uint64_t)gb_load_u8(f));
+
+     return v;
+}
+
+void gb_rtc_dump(struct gb *gb, FILE *f) {
+     struct gb_rtc *rtc = &gb->cart.rtc;
+
+     gb_dump_u64(f, rtc->base);
+     gb_dump_u64(f, rtc->halt_date);
+     gb_dump_u8(f, rtc->latch);
+     gb_dump_u8(f, rtc->latched_date.s);
+     gb_dump_u8(f, rtc->latched_date.m);
+     gb_dump_u8(f, rtc->latched_date.h);
+     gb_dump_u8(f, rtc->latched_date.dl);
+     gb_dump_u8(f, rtc->latched_date.dh);
+}
+
+void gb_rtc_load(struct gb *gb, FILE *f) {
+     struct gb_rtc *rtc = &gb->cart.rtc;
+
+     rtc->base = gb_load_u64(f);
+     rtc->halt_date = gb_load_u64(f);
+     rtc->latch = gb_load_u8(f);
+     rtc->latched_date.s = gb_load_u8(f);
+     rtc->latched_date.m = gb_load_u8(f);
+     rtc->latched_date.h = gb_load_u8(f);
+     rtc->latched_date.dl = gb_load_u8(f);
+     rtc->latched_date.dh = gb_load_u8(f);
+}

@@ -31,5 +31,7 @@ void gb_rtc_init(struct gb *gb);
 void gb_rtc_latch(struct gb *gb, bool latch);
 uint8_t gb_rtc_read(struct gb *gb, unsigned r);
 void gb_rtc_write(struct gb *gb, unsigned r, uint8_t v);
+void gb_rtc_dump(struct gb *gb, FILE *f);
+void gb_rtc_load(struct gb *gb, FILE *f);
 
 #endif /* _GB_RTC_H_ */
