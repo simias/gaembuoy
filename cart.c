@@ -62,6 +62,7 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
      cart->mbc1_bank_ram = false;
      cart->save_file = NULL;
      cart->dirty_ram = false;
+     cart->has_rtc = false;
      has_battery_backup = false;
 
      if (f == NULL) {
@@ -206,6 +207,8 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
            * be used */
           cart->ram_length = 512;
           break;
+     case 0x0f: /* MBC3, with battery backup and RTC */
+     case 0x10: /* MBC3, with RAM, battery backup and RTC */
      case 0x11: /* MBC3, no RAM */
      case 0x12: /* MBC3, with RAM */
      case 0x13: /* MBC3, with RAM and battery backup */
@@ -236,6 +239,13 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
           has_battery_backup = true;
      }
 
+     /* Check if cart has an RTC */
+     switch (cart->rom[GB_CART_OFF_TYPE]) {
+     case 0xf:
+     case 0x10:
+          cart->has_rtc = true;
+     }
+
      /* Allocate RAM buffer */
      if (cart->ram_length > 0) {
           cart->ram = calloc(1, cart->ram_length);
@@ -243,8 +253,8 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
                perror("Can't allocate RAM buffer");
                goto error;
           }
-     } else {
-          /* Memory backup without RAM doesn't make a lot of sense */
+     } else if (!cart->has_rtc) {
+          /* Memory backup without RAM or RTC doesn't make a lot of sense */
           has_battery_backup = false;
      }
 
@@ -279,14 +289,30 @@ void gb_cart_load(struct gb *gb, const char *rom_path) {
           f = fopen(cart->save_file, "rb");
           if (f != NULL) {
                /* The file exists, load RAM contents */
-               nread = fread(cart->ram, 1, cart->ram_length, f);
-               fclose(f);
+               if (cart->ram_length > 0) {
+                    nread = fread(cart->ram, 1, cart->ram_length, f);
+               } else {
+                    nread = 0;
+               }
+
                if (nread != cart->ram_length) {
                     fprintf(stderr, "RAM save file is too small!\n");
+                    fclose(f);
                     goto error;
                }
 
+               /* XXX load RTC info */
+               if (cart->has_rtc) {
+                    gb_rtc_init(gb);
+               }
+
+               fclose(f);
                printf("Loaded RAM save from '%s'\n", cart->save_file);
+          } else {
+               /* No save file */
+               if (cart->has_rtc) {
+                    gb_rtc_init(gb);
+               }
           }
 
      }
@@ -356,6 +382,8 @@ static void gb_cart_ram_save(struct gb *gb) {
           fclose(f);
           die();
      }
+
+     /* XXX dump RTC when necessary */
 
      fflush(f);
      fclose(f);
@@ -492,11 +520,11 @@ void gb_cart_rom_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
                     cart->cur_rom_bank = 1;
                }
           } else if (addr < 0x6000) {
-               if (v <= 3) {
-                    /* Set RAM bank */
-                    if (cart->ram_banks > 0) {
-                         cart->cur_ram_bank = v % cart->ram_banks;
-                    }
+               /* Set RAM bank (v < 3) *or* RTC access */
+               cart->cur_ram_bank = v;
+          } else if (addr < 0x8000) {
+               if (cart->has_rtc) {
+                    gb_rtc_latch(gb, v == 1);
                }
           }
           break;
@@ -566,6 +594,29 @@ uint8_t gb_cart_ram_readb(struct gb *gb, uint16_t addr) {
           ram_off = addr % 512;
           break;
      case GB_CART_MBC3:
+          if (cart->cur_ram_bank <= 3) {
+               /* RAM access */
+               unsigned b;
+
+               if (cart->ram_banks == 0) {
+                    /* No RAM */
+                    return 0xff;
+               }
+
+               b = cart->cur_ram_bank % cart->ram_banks;
+
+               ram_off = b * GB_RAM_BANK_SIZE + addr;
+          } else {
+               /* RTC access. Only accessible when the RAM is not write
+                * protected (even for reads) */
+               if (cart->has_rtc && !cart->ram_write_protected) {
+                    return gb_rtc_read(gb, cart->cur_ram_bank);
+               } else {
+                    return 0xff;
+               }
+          }
+
+          break;
      case GB_CART_MBC5:
           if (cart->ram_banks == 0) {
                /* No RAM */
@@ -609,6 +660,28 @@ void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
           v |= 0xf0;
           break;
      case GB_CART_MBC3:
+          if (cart->cur_ram_bank <= 3) {
+               /* RAM access */
+               unsigned b;
+
+               if (cart->ram_banks == 0) {
+                    /* No RAM */
+                    return;
+               }
+
+               b = cart->cur_ram_bank % cart->ram_banks;
+
+               ram_off = b * GB_RAM_BANK_SIZE + addr;
+          } else {
+               /* RTC access. Only accessible when the RAM is not write
+                * protected (even for reads) */
+               if (cart->has_rtc) {
+                    gb_rtc_write(gb, cart->cur_ram_bank, v);
+               }
+               goto write_done;
+          }
+
+          break;
      case GB_CART_MBC5:
           if (cart->ram_banks == 0) {
                /* No RAM */
@@ -623,6 +696,8 @@ void gb_cart_ram_writeb(struct gb *gb, uint16_t addr, uint8_t v) {
      }
 
      cart->ram[ram_off] = v;
+
+write_done:
      if (cart->save_file) {
           cart->dirty_ram = true;
           /* Schedule a save in a short while if we don't have changes by then
