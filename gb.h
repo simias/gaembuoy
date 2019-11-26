@@ -13,6 +13,7 @@ struct gb;
 #include "irq.h"
 #include "cpu.h"
 #include "memory.h"
+#include "rtc.h"
 #include "cart.h"
 #include "gpu.h"
 #include "input.h"

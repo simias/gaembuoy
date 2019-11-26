@@ -44,6 +44,10 @@ struct gb_cart {
      char *save_file;
      /* Dirty flag, set to true when the RAM has been written to */
      bool dirty_ram;
+     /* True if the cartrige has a Real Time Clock */
+     bool has_rtc;
+     /* RTC state (if the cart has one) */
+     struct gb_rtc rtc;
 };
 
 void gb_cart_load(struct gb *gb, const char *rom_path);
