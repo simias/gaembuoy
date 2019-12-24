@@ -9,14 +9,16 @@ struct gb_sdl_context {
      SDL_GameController *controller;
      SDL_AudioSpec audio_spec;
      SDL_AudioDeviceID audio_device;
-     uint32_t pixels[GB_LCD_WIDTH * GB_LCD_HEIGHT];
+     uint32_t pixels[GB_MAP_WIDTH * GB_MAP_HEIGHT];
      /* Index of the next audio buffer we want to play */
      unsigned audio_buf_index;
 };
 
 static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
                                  union gb_gpu_color line[GB_LCD_WIDTH]) {
+     struct gb_frontend *f = &gb->frontend;
      struct gb_sdl_context *ctx = gb->frontend.data;
+     unsigned y = (f->map_y + ly) % GB_MAP_HEIGHT;
      unsigned i;
 
      static const uint32_t col_map[4] = {
@@ -27,7 +29,9 @@ static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
      };
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = col_map[line[i].dmg_color];
+          unsigned x = (f->map_x + i) % GB_MAP_WIDTH;
+
+          ctx->pixels[y * GB_MAP_WIDTH + x] = col_map[line[i].dmg_color];
      }
 }
 
@@ -56,13 +60,16 @@ static uint32_t gb_sdl_gbc_to_xrgb8888(uint16_t c) {
 
 static void gb_sdl_draw_line_gbc(struct gb *gb, unsigned ly,
                                  union gb_gpu_color line[GB_LCD_WIDTH]) {
+     struct gb_frontend *f = &gb->frontend;
      struct gb_sdl_context *ctx = gb->frontend.data;
+     unsigned y = (f->map_y + ly) % GB_MAP_HEIGHT;
      unsigned i;
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
           uint16_t c = line[i].gbc_color;
+          unsigned x = (f->map_x + i) % GB_MAP_WIDTH;
 
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = gb_sdl_gbc_to_xrgb8888(c);
+          ctx->pixels[y * GB_MAP_WIDTH + x] = gb_sdl_gbc_to_xrgb8888(c);
      }
 }
 
@@ -97,6 +104,11 @@ static void gb_sdl_handle_key(struct gb *gb, SDL_Keycode key, bool pressed) {
           break;
      case SDLK_RIGHT:
           gb_input_set(gb, GB_INPUT_RIGHT, pressed);
+          break;
+     case SDLK_r:
+          if (pressed) {
+               gb_frontend_recenter(gb);
+          }
           break;
      }
 }
@@ -220,7 +232,7 @@ static void gb_sdl_flip(struct gb *gb) {
 
      /* Copy pixels to the canvas texture */
      SDL_UpdateTexture(ctx->canvas, NULL, ctx->pixels,
-                       GB_LCD_WIDTH * sizeof(ctx->pixels[0]));
+                       GB_MAP_WIDTH * sizeof(ctx->pixels[0]));
 
      /* Render the canvas */
      SDL_RenderCopy(ctx->renderer, ctx->canvas, NULL, NULL);
@@ -290,7 +302,7 @@ void gb_sdl_frontend_init(struct gb *gb) {
           die();
      }
 
-     if (SDL_CreateWindowAndRenderer(GB_LCD_WIDTH, GB_LCD_HEIGHT,
+     if (SDL_CreateWindowAndRenderer(GB_MAP_WIDTH, GB_MAP_HEIGHT,
                                      0, &ctx->window, &ctx->renderer) < 0) {
           fprintf(stderr, "SDL_CreateWindowAndRenderer failed: %s\n",
                   SDL_GetError());
@@ -302,7 +314,7 @@ void gb_sdl_frontend_init(struct gb *gb) {
      ctx->canvas = SDL_CreateTexture(ctx->renderer,
                                      SDL_PIXELFORMAT_ARGB8888,
                                      SDL_TEXTUREACCESS_STREAMING,
-                                     GB_LCD_WIDTH, GB_LCD_HEIGHT);
+                                     GB_MAP_WIDTH, GB_MAP_HEIGHT);
      if (ctx->canvas == NULL) {
           fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
           die();
@@ -332,6 +344,8 @@ void gb_sdl_frontend_init(struct gb *gb) {
      gb->frontend.flip = gb_sdl_flip;
      gb->frontend.refresh_input = gb_sdl_refresh_input;
      gb->frontend.destroy = gb_sdl_destroy;
+
+     gb_frontend_recenter(gb);
 
      /* Clear the canvas */
      memset(ctx->pixels, 0, sizeof(ctx->pixels));

@@ -473,6 +473,19 @@ uint8_t gb_memory_readb(struct gb *gb, uint16_t addr) {
      return 0xff;
 }
 
+static int gb_guess_bg_translation(uint8_t old_pos, uint8_t new_pos) {
+     /* We can't know which direction the background shifted exactly, so we just
+      * try both and keep the smallest one */
+     uint8_t shift_right = new_pos - old_pos;
+     uint8_t shift_left = old_pos - new_pos;
+
+     if (shift_right < shift_left) {
+          return shift_right;
+     } else {
+          return -(int)shift_left;
+     }
+}
+
 void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
 
      if (addr >= ROM_BASE && addr < ROM_END) {
@@ -815,12 +828,16 @@ void gb_memory_writeb(struct gb *gb, uint16_t addr, uint8_t val) {
      }
 
      if (addr == REG_SCY) {
+          gb->frontend.map_y += gb_guess_bg_translation(gb->gpu.scy, val);
+
           gb_gpu_sync(gb);
           gb->gpu.scy = val;
           return;
      }
 
      if (addr == REG_SCX) {
+          gb->frontend.map_x += gb_guess_bg_translation(gb->gpu.scx, val);
+
           gb_gpu_sync(gb);
           gb->gpu.scx = val;
           return;
