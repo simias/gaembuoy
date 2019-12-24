@@ -65,6 +65,7 @@ void gb_gpu_reset(struct gb *gb) {
      gpu->wx = 0;
      gpu->wy = 0;
      gpu->line_pos = 0;
+     gpu->no_window = false;
 
      for (i = 0; i < sizeof(gpu->oam); i++) {
           gpu->oam[i] = 0;
@@ -480,7 +481,8 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
           struct gb_sprite s;
           unsigned i;
 
-          if (gpu->window_enable && gb_gpu_pix_in_window(gb, x, gpu->ly)) {
+          if (!gpu->no_window &&
+              gpu->window_enable && gb_gpu_pix_in_window(gb, x, gpu->ly)) {
                /* Pixel lies within the window */
                p = gb_gpu_get_win_pixel(gb, x, gpu->ly);
           } else if (gpu->bg_enable) {

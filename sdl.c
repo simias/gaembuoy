@@ -110,6 +110,11 @@ static void gb_sdl_handle_key(struct gb *gb, SDL_Keycode key, bool pressed) {
                gb_frontend_recenter(gb);
           }
           break;
+     case SDLK_w:
+          if (pressed) {
+               gb->gpu.no_window = !gb->gpu.no_window;
+          }
+          break;
      }
 }
 

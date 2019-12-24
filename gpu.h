@@ -83,6 +83,8 @@ struct gb_gpu {
      struct gb_color_palette bg_palettes;
      /* GBC-only: sprite color palettes */
      struct gb_color_palette sprite_palettes;
+     /* Hack: force disable window */
+     bool no_window;
 };
 
 void gb_gpu_reset(struct gb *gb);
