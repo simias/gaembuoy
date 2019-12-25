@@ -11,7 +11,7 @@ enum gb_color {
      GB_COL_BLACK
 };
 
-#define GB_LCD_WIDTH  160
+#define GB_LCD_WIDTH  256
 #define GB_LCD_HEIGHT 144
 
 union gb_gpu_color {

@@ -14,6 +14,8 @@ struct gb_sdl_context {
      unsigned audio_buf_index;
 };
 
+#define GB_X_OFFSET 32
+
 static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
                                  union gb_gpu_color line[GB_LCD_WIDTH]) {
      struct gb_sdl_context *ctx = gb->frontend.data;
@@ -27,7 +29,8 @@ static void gb_sdl_draw_line_dmg(struct gb *gb, unsigned ly,
      };
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = col_map[line[i].dmg_color];
+          unsigned x = (i + GB_X_OFFSET) % GB_LCD_WIDTH;
+          ctx->pixels[ly * GB_LCD_WIDTH + x] = col_map[line[i].dmg_color];
      }
 }
 
@@ -61,8 +64,9 @@ static void gb_sdl_draw_line_gbc(struct gb *gb, unsigned ly,
 
      for (i = 0; i < GB_LCD_WIDTH; i++) {
           uint16_t c = line[i].gbc_color;
+          unsigned x = (i + GB_X_OFFSET) % GB_LCD_WIDTH;
 
-          ctx->pixels[ly * GB_LCD_WIDTH + i] = gb_sdl_gbc_to_xrgb8888(c);
+          ctx->pixels[ly * GB_LCD_WIDTH + x] = gb_sdl_gbc_to_xrgb8888(c);
      }
 }
 
