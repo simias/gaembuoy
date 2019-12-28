@@ -1,7 +1,7 @@
 NAME = gaembuoy
 
 CFLAGS = -Wall -O2 -MMD -MP `pkg-config --cflags sdl2`
-LDFLAGS = `pkg-config --libs sdl2`
+LDFLAGS = `pkg-config --libs sdl2` -lpthread
 
 SRC = main.c cpu.c memory.c cart.c gpu.c sync.c sdl.c input.c irq.c dma.c \
       timer.c spu.c hdma.c rtc.c
@@ -11,7 +11,7 @@ DEP = $(SRC:%.c=%.d)
 
 $(NAME) : $(OBJ)
 	$(info LD $@)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 -include $(DEP)
 
