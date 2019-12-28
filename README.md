@@ -83,3 +83,18 @@ git cherry-pick dev/upscaling
 You can change the scaling factor by changing the value of `UPSCALE_FACTOR` at
 the top of `sdl.c`, by default it's set to 4 (i.e. each dimension is multiplied
 by 4 for an effective resolution of 640x576).
+
+### Frontend support and sync-to-audio
+
+For now only a very primitive frontend is implemented using SDL2, however that
+part of the code is abstracted away to make it easy to implement alternatives,
+at least in theory. See `frontend.h` to see the API used to interact with the
+frontend, it's just a handful of function pointers. The audio buffers are not
+explicitly passed to the frontend, instead a set of buffers are filled in
+`gb->spu.buffers` and the frontend is expected to send those directly in its
+audio callback using a pair of semaphores to synchronize the access between the
+core and the frontend. See `gb_sdl_audio_callback` in `sdl.c` for more details.
+
+The emulator currently only implements sync-to-audio so it'll block when the
+audio buffers are full, waiting for the frontend to empty them before it
+continues running.
