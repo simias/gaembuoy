@@ -100,7 +100,7 @@ struct gb_gpu_pixel {
      bool priority;
 };
 
-/* Get a pixel value from the tileset, original DMG model version */
+/* Get a pixel value from the tileset */
 static enum gb_color gb_gpu_get_tile_color(struct gb *gb,
                                            uint8_t tile_index,
                                            uint8_t x, uint8_t y,
