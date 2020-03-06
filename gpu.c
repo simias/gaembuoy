@@ -489,7 +489,7 @@ static void gb_gpu_draw_cur_line(struct gb *gb) {
 
           /* If the background priority is set it means that the BG has the
            * priority over any sprite at this location */
-          if (!p.priority) {
+          if (!p.priority || !p.opaque) {
                if (gb->gbc) {
                     /* In GBC the sprites aren't ordered by x-coordinate because
                      * the location in OAM has priority, so we have to iterate
